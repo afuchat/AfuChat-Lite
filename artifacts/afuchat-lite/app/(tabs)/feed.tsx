@@ -16,8 +16,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { Post, PostReply, Profile, getDisplayName, supabase } from "@/lib/supabase";
@@ -48,7 +48,7 @@ function CommentRow({ reply, colors }: { reply: PostReply; colors: any }) {
           <Text style={[commentStyles.name, { color: colors.foreground }]} numberOfLines={1}>
             {name}
           </Text>
-          {reply.author?.is_verified && <AfuChatLogo size={13} />}
+          {reply.author?.is_verified && <VerifiedBadge size={14} />}
           <Text style={[commentStyles.time, { color: colors.mutedForeground }]}>
             · {timeAgo(reply.created_at)}
           </Text>
@@ -175,7 +175,7 @@ function PostCard({
               <Text style={[postStyles.authorName, { color: colors.foreground }]} numberOfLines={1}>
                 {authorName}
               </Text>
-              {post.author?.is_verified && <AfuChatLogo size={15} />}
+              {post.author?.is_verified && <VerifiedBadge size={16} />}
             </View>
             <Text style={[postStyles.postTime, { color: colors.mutedForeground }]}>
               {timeAgo(post.created_at)}

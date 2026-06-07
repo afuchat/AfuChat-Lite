@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useUnread } from "@/context/UnreadContext";
 import { useColors } from "@/hooks/useColors";
@@ -314,6 +314,7 @@ export default function ChatsScreen() {
                       isGroup: item.chat.is_group ? "1" : "0",
                       avatarUrl: item.otherUser?.avatar_url ?? "",
                       otherId: item.otherUser?.id ?? "",
+                      isVerified: item.otherUser?.is_verified ? "1" : "0",
                     },
                   });
                 }}
@@ -322,9 +323,14 @@ export default function ChatsScreen() {
                 <Avatar uri={item.otherUser?.avatar_url} name={title} size={52} isOnline={online} />
                 <View style={styles.chatInfo}>
                   <View style={styles.chatTopRow}>
-                    <Text style={[styles.chatName, { color: colors.foreground }]} numberOfLines={1}>
-                      {title}
-                    </Text>
+                    <View style={styles.chatNameWrap}>
+                      <Text style={[styles.chatName, { color: colors.foreground }]} numberOfLines={1}>
+                        {title}
+                      </Text>
+                      {!item.chat.is_group && item.otherUser?.is_verified && (
+                        <VerifiedBadge size={14} />
+                      )}
+                    </View>
                     <Text style={[styles.chatTime, { color: colors.mutedForeground }]}>
                       {formatTime(item.lastMessageAt)}
                     </Text>
@@ -447,7 +453,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  chatName: { fontSize: 16, fontFamily: "Inter_600SemiBold", flex: 1, marginRight: 8 },
+  chatNameWrap: { flex: 1, flexDirection: "row", alignItems: "center", gap: 4, marginRight: 8 },
+  chatName: { fontSize: 16, fontFamily: "Inter_600SemiBold", flexShrink: 1 },
   chatTime: { fontSize: 12, fontFamily: "Inter_400Regular" },
   chatPreview: { fontSize: 14, lineHeight: 18 },
   unreadBadge: {

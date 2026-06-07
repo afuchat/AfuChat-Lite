@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
@@ -251,12 +252,13 @@ const replyBarStyles = StyleSheet.create({
 
 // ── Main chat screen ──────────────────────────────────────────────────────────
 export default function ChatScreen() {
-  const { id, name, isGroup, avatarUrl, otherId } = useLocalSearchParams<{
+  const { id, name, isGroup, avatarUrl, otherId, isVerified } = useLocalSearchParams<{
     id: string;
     name: string;
     isGroup: string;
     avatarUrl?: string;
     otherId?: string;
+    isVerified?: string;
   }>();
 
   const colors = useColors();
@@ -449,6 +451,7 @@ export default function ChatScreen() {
               <Text style={[headerStyles.name, { color: colors.foreground }]} numberOfLines={1}>
                 {name}
               </Text>
+              {isVerified === "1" && <VerifiedBadge size={16} />}
             </Pressable>
           ),
         }}

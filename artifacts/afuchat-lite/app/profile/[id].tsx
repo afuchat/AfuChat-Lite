@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import { AfuChatLogo } from "@/components/AfuChatLogo";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -14,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { Profile, getDisplayName, isOnline, supabase } from "@/lib/supabase";
@@ -139,9 +139,7 @@ export default function UserProfileScreen() {
                 <Text style={[styles.displayName, { color: colors.foreground }]} numberOfLines={1}>
                   {getDisplayName(profile)}
                 </Text>
-                {profile.is_verified && (
-                  <AfuChatLogo size={22} />
-                )}
+                {profile.is_verified && <VerifiedBadge size={20} />}
               </View>
               <Text style={[styles.handle, { color: colors.primary }]}>@{profile.handle}</Text>
               <Text style={[styles.onlineStatus, { color: isOnline(profile) ? "#22C55E" : colors.mutedForeground }]}>

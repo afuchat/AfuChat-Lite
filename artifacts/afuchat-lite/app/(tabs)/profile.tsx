@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -318,11 +319,7 @@ export default function ProfileScreen() {
             <View style={styles.nameBlock}>
               <View style={styles.nameRow}>
                 <Text style={styles.profileName}>{name}</Text>
-                {profile?.is_verified && (
-                  <View style={styles.verifiedBadge}>
-                    <Ionicons name="checkmark" size={11} color="#1E90FF" />
-                  </View>
-                )}
+                {profile?.is_verified && <VerifiedBadge size={20} />}
               </View>
               <Text style={styles.profileHandle}>@{profile?.handle}</Text>
               {profile?.bio ? (
@@ -533,15 +530,4 @@ const styles = StyleSheet.create({
 
   statusRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
-
-  verifiedBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "rgba(30,144,255,0.3)",
-  },
 });

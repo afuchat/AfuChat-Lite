@@ -1,5 +1,4 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { AfuChatLogo } from "@/components/AfuChatLogo";
 import * as Contacts from "expo-contacts";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
@@ -19,6 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import {
@@ -268,7 +268,7 @@ export default function NewChatScreen() {
         <View style={styles.rowInfo}>
           <View style={styles.nameRow}>
             <Text style={[styles.rowName, { color: colors.foreground }]} numberOfLines={1}>{name}</Text>
-            {item.is_verified && <AfuChatLogo size={15} />}
+            {item.is_verified && <VerifiedBadge size={16} />}
           </View>
           <Text style={[styles.rowSub, { color: colors.primary }]}>@{item.handle}</Text>
           {extra ? <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{extra}</Text> : null}
