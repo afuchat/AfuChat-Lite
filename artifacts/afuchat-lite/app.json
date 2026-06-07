@@ -2,6 +2,7 @@
   "expo": {
     "name": "AfuChat Lite",
     "slug": "afuchat-lite",
+    "owner": "amkaweesi1",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,6 +38,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "952b27ee-4784-4662-a46e-8d68235113ad"
+      }
     }
   }
 }

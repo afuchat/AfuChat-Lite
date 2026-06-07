@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname, useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
@@ -38,7 +38,7 @@ function CustomTabBar() {
 
   return (
     <View
-      style={[styles.wrapper, { bottom: insets.bottom + 12 }]}
+      style={[styles.wrapper, { bottom: insets.bottom + 14 }]}
       pointerEvents="box-none"
     >
       <View style={[styles.pill, { backgroundColor: colors.tabBar }]}>
@@ -55,11 +55,19 @@ function CustomTabBar() {
             >
               <View style={[styles.iconPill, focused && styles.iconPillActive]}>
                 <View style={{ position: "relative" }}>
-                  <Ionicons
-                    name={focused ? tab.iconFocused : tab.icon}
-                    size={21}
-                    color={focused ? "#fff" : colors.mutedForeground}
-                  />
+                  {focused ? (
+                    <Image
+                      source={require("../../assets/images/logo.png")}
+                      style={styles.activeTabLogo}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Ionicons
+                      name={tab.icon}
+                      size={22}
+                      color={colors.mutedForeground}
+                    />
+                  )}
                   {badge > 0 && (
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>{badge > 9 ? "9+" : badge}</Text>
@@ -100,9 +108,9 @@ const styles = StyleSheet.create({
   } as any,
   pill: {
     flexDirection: "row",
-    width: 168,
-    height: 52,
-    borderRadius: 26,
+    width: 260,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "space-evenly",
     elevation: 24,
@@ -110,15 +118,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.18,
     shadowRadius: 20,
+    paddingHorizontal: 8,
   },
   tabBtn: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    height: 52,
+    height: 60,
   },
   iconPill: {
-    width: 42,
+    width: 64,
     height: 36,
     borderRadius: 18,
     alignItems: "center",
@@ -128,14 +137,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E90FF",
     shadowColor: "#1E90FF",
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.45,
     shadowRadius: 8,
     elevation: 6,
+  },
+  activeTabLogo: {
+    width: 22,
+    height: 22,
   },
   badge: {
     position: "absolute",
     top: -4,
-    right: -7,
+    right: -8,
     backgroundColor: "#EF4444",
     borderRadius: 8,
     minWidth: 14,
