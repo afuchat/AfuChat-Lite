@@ -5,7 +5,6 @@ import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -59,13 +58,8 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
+          {/* Brand */}
           <View style={styles.logoWrap}>
-            <Image
-              source={require("@/assets/images/logo.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
             <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
             <Text style={[styles.tagline, { color: colors.mutedForeground }]}>Fast. Simple. Yours.</Text>
           </View>
@@ -175,8 +169,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 36 },
 
-  logoWrap: { alignItems: "center", gap: 12 },
-  logo: { width: 84, height: 84, borderRadius: 22 },
+  logoWrap: { alignItems: "center", gap: 8 },
   appName: {
     fontSize: 28,
     fontFamily: "Inter_700Bold",
