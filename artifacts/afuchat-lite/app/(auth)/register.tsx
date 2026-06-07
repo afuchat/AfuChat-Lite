@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -122,16 +123,22 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Brand */}
+          <View style={styles.logoWrap}>
+            <AfuChatLogo size={56} />
+            <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
+          </View>
+
           {/* Header */}
           <View style={styles.header}>
             <Pressable onPress={goBack} style={styles.backBtn} hitSlop={8}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </Pressable>
             <View style={styles.stepInfo}>
-              <Text style={styles.stepLabel}>
+              <Text style={[styles.stepLabel, { color: colors.mutedForeground }]}>
                 Step {step + 1} of {STEPS.length}
               </Text>
-              <Text style={styles.stepName}>{STEPS[step]}</Text>
+              <Text style={[styles.stepName, { color: colors.foreground }]}>{STEPS[step]}</Text>
             </View>
           </View>
 
@@ -385,6 +392,9 @@ const InputField = React.forwardRef<TextInput, InputFieldProps>(
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 20 },
+
+  logoWrap: { alignItems: "center", gap: 6, paddingBottom: 4 },
+  appName: { fontSize: 24, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
 
   header: { flexDirection: "row", alignItems: "center", gap: 14 },
   backBtn: {
