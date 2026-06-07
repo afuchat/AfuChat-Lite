@@ -28,7 +28,6 @@ type OfflineContextType = {
 
 const OfflineContext = createContext<OfflineContextType | null>(null);
 const QUEUE_KEY = "afuchat_lite_offline_queue_v2";
-const PROBE_URL = "https://connectivity.gstatic.com/generate_204";
 
 export function OfflineProvider({ children }: { children: React.ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
@@ -47,20 +46,40 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
   }, []);
 
+  // Probe connectivity via Supabase — avoids CORS / network policy issues
+  // that plague external fetch probes on Android.
   useEffect(() => {
     const probe = async () => {
       try {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 4000);
-        const res = await fetch(PROBE_URL, {
-          method: "HEAD",
-          signal: ctrl.signal,
-          cache: "no-store",
-        });
-        clearTimeout(timer);
-        if (mounted.current) setIsOnline(res.status < 500);
-      } catch {
-        if (mounted.current) setIsOnline(false);
+        const { error } = await supabase
+          .from("profiles")
+          .select("id")
+          .limit(1);
+
+        if (!mounted.current) return;
+
+        if (!error) {
+          setIsOnline(true);
+          return;
+        }
+
+        // Any DB/auth error still means the network is reachable
+        const msg = (error.message ?? "").toLowerCase();
+        const networkDown =
+          msg.includes("failed to fetch") ||
+          msg.includes("network request failed") ||
+          msg.includes("fetch failed") ||
+          msg.includes("networkerror");
+
+        setIsOnline(!networkDown);
+      } catch (e: any) {
+        if (!mounted.current) return;
+        const msg = (e?.message ?? "").toLowerCase();
+        setIsOnline(
+          !msg.includes("failed to fetch") &&
+          !msg.includes("network request failed") &&
+          !msg.includes("fetch failed")
+        );
       }
     };
 

@@ -78,8 +78,8 @@ export type Post = {
   user_id: string;
   content: string;
   image_url: string | null;
-  like_count: number;
-  comment_count: number;
+  like_count: number | null;
+  comment_count: number | null;
   created_at: string;
   author?: Profile;
 };

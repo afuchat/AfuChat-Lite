@@ -281,6 +281,16 @@ export default function ChatScreen() {
     return () => { mounted.current = false; };
   }, []);
 
+  const markAsRead = useCallback(async () => {
+    if (!id || !user) return;
+    await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("chat_id", id)
+      .neq("sender_id", user.id)
+      .is("read_at", null);
+  }, [id, user]);
+
   const loadMessages = useCallback(async () => {
     if (!id) return;
     try {
@@ -297,12 +307,14 @@ export default function ChatScreen() {
       const msgs = (data as unknown as Message[]) ?? [];
       msgs.forEach((m) => msgMap.current.set(m.id, m));
       if (mounted.current) { setMessages(msgs); setError(null); }
+      // Mark all received messages as read now that the user sees them
+      markAsRead();
     } catch (e: any) {
       if (mounted.current) setError(e?.message ?? "Failed to load messages");
     } finally {
       if (mounted.current) setLoading(false);
     }
-  }, [id]);
+  }, [id, markAsRead]);
 
   useEffect(() => {
     loadMessages();

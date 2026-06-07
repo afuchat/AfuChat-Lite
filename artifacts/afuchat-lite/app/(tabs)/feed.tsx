@@ -163,17 +163,11 @@ export default function FeedScreen() {
     try {
       const { data, error: qErr } = await supabase
         .from("posts")
-        .select("id, user_id, content, image_url, like_count, comment_count, created_at")
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (qErr) {
-        if (qErr.message?.includes("does not exist")) {
-          if (mounted.current) { setPosts([]); setError(null); }
-          return;
-        }
-        throw qErr;
-      }
+      if (qErr) throw qErr;
 
       const postList = (data ?? []) as Post[];
       const authorIds = [...new Set(postList.map((p) => p.user_id))];
@@ -185,7 +179,12 @@ export default function FeedScreen() {
         : { data: [] as Profile[] };
 
       const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p as Profile]));
-      const enriched = postList.map((p) => ({ ...p, author: profileMap.get(p.user_id) }));
+      const enriched = postList.map((p) => ({
+        ...p,
+        like_count: p.like_count ?? 0,
+        comment_count: p.comment_count ?? 0,
+        author: profileMap.get(p.user_id),
+      }));
 
       if (mounted.current) { setPosts(enriched); setError(null); }
     } catch (e: any) {

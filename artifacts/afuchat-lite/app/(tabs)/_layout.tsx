@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useOffline } from "@/context/OfflineContext";
+import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
+import { supabase } from "@/lib/supabase";
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -43,7 +44,40 @@ function TabPill({
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { pendingCount } = useOffline();
+  const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnread = async () => {
+      try {
+        const { count } = await supabase
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .neq("sender_id", user.id)
+          .is("read_at", null);
+        if (mounted.current) setUnreadCount(count ?? 0);
+      } catch {
+        // ignore — badge is non-critical
+      }
+    };
+
+    fetchUnread();
+
+    const ch = supabase
+      .channel("unread-badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, fetchUnread)
+      .subscribe();
+
+    return () => { supabase.removeChannel(ch); };
+  }, [user]);
 
   return (
     <Tabs
@@ -83,7 +117,7 @@ export default function TabLayout() {
               iconFocused="chatbubbles"
               focused={focused}
               color={color}
-              badge={pendingCount}
+              badge={unreadCount}
             />
           ),
         }}
