@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -37,6 +38,8 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRef = useRef<TextInput>(null);
@@ -84,6 +87,14 @@ export default function RegisterScreen() {
     }
     if (password !== confirmPassword) {
       Alert.alert("Passwords don't match", "Please make sure both passwords are the same.");
+      return;
+    }
+    if (!ageConfirmed) {
+      Alert.alert("Age required", "You must be 13 or older to use AfuChat Lite.");
+      return;
+    }
+    if (!termsAccepted) {
+      Alert.alert("Terms required", "Please accept the Terms of Service and Privacy Policy to continue.");
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -166,11 +177,15 @@ export default function RegisterScreen() {
             confirmPassword={confirmPassword}
             showPass={showPass}
             showConfirm={showConfirm}
+            ageConfirmed={ageConfirmed}
+            termsAccepted={termsAccepted}
             setEmail={setEmail}
             setPassword={setPassword}
             setConfirmPassword={setConfirmPassword}
             setShowPass={setShowPass}
             setShowConfirm={setShowConfirm}
+            setAgeConfirmed={setAgeConfirmed}
+            setTermsAccepted={setTermsAccepted}
             emailRef={emailRef}
             passwordRef={passwordRef}
             confirmRef={confirmRef}
@@ -250,19 +265,28 @@ function Step1({ displayName, handle, setDisplayName, setHandle, handleRef, onNe
 
 function Step2({
   email, password, confirmPassword, showPass, showConfirm,
+  ageConfirmed, termsAccepted,
   setEmail, setPassword, setConfirmPassword, setShowPass, setShowConfirm,
+  setAgeConfirmed, setTermsAccepted,
   emailRef, passwordRef, confirmRef, loading, onSubmit, colors,
 }: {
   email: string; password: string; confirmPassword: string;
   showPass: boolean; showConfirm: boolean;
+  ageConfirmed: boolean; termsAccepted: boolean;
   setEmail: (v: string) => void; setPassword: (v: string) => void;
   setConfirmPassword: (v: string) => void; setShowPass: (v: boolean) => void;
   setShowConfirm: (v: boolean) => void;
+  setAgeConfirmed: (v: boolean) => void; setTermsAccepted: (v: boolean) => void;
   emailRef: React.RefObject<TextInput | null>;
   passwordRef: React.RefObject<TextInput | null>;
   confirmRef: React.RefObject<TextInput | null>;
   loading: boolean; onSubmit: () => void; colors: any;
 }) {
+  const openTerms = () => WebBrowser.openBrowserAsync("https://afuchat.com/terms");
+  const openPolicy = () => WebBrowser.openBrowserAsync("https://afuchat.com/policy");
+
+  const canSubmit = ageConfirmed && termsAccepted && !loading;
+
   return (
     <View style={styles.stepContent}>
       <Text style={[styles.title, { color: colors.foreground }]}>Your Account</Text>
@@ -282,17 +306,80 @@ function Step2({
           onChangeText={setConfirmPassword} secureTextEntry={!showConfirm} returnKeyType="done"
           onSubmitEditing={onSubmit}
           rightIcon={showConfirm ? "eye-off" : "eye"} onRightIconPress={() => setShowConfirm(!showConfirm)} colors={colors} />
+
+        {/* Age confirmation */}
         <Pressable
-          style={({ pressed }) => [styles.primaryBtn, { backgroundColor: colors.primary, opacity: pressed || loading ? 0.88 : 1 }]}
+          style={styles.checkRow}
+          onPress={() => setAgeConfirmed(!ageConfirmed)}
+          hitSlop={6}
+        >
+          <View style={[
+            styles.checkbox,
+            {
+              borderColor: ageConfirmed ? colors.primary : colors.border,
+              backgroundColor: ageConfirmed ? colors.primary : "transparent",
+            },
+          ]}>
+            {ageConfirmed && <Feather name="check" size={12} color="#fff" />}
+          </View>
+          <Text style={[styles.checkLabel, { color: colors.foreground }]}>
+            I confirm I am{" "}
+            <Text style={{ fontFamily: "Inter_600SemiBold" }}>13 years or older</Text>
+          </Text>
+        </Pressable>
+
+        {/* Terms & policy */}
+        <Pressable
+          style={styles.checkRow}
+          onPress={() => setTermsAccepted(!termsAccepted)}
+          hitSlop={6}
+        >
+          <View style={[
+            styles.checkbox,
+            {
+              borderColor: termsAccepted ? colors.primary : colors.border,
+              backgroundColor: termsAccepted ? colors.primary : "transparent",
+            },
+          ]}>
+            {termsAccepted && <Feather name="check" size={12} color="#fff" />}
+          </View>
+          <Text style={[styles.checkLabel, { color: colors.foreground }]}>
+            {"I agree to the "}
+            <Text
+              style={[styles.link, { color: colors.primary }]}
+              onPress={openTerms}
+            >
+              Terms of Service
+            </Text>
+            {" and "}
+            <Text
+              style={[styles.link, { color: colors.primary }]}
+              onPress={openPolicy}
+            >
+              Privacy Policy
+            </Text>
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryBtn,
+            {
+              backgroundColor: canSubmit ? colors.primary : colors.muted,
+              opacity: pressed ? 0.88 : 1,
+            },
+          ]}
           onPress={onSubmit}
-          disabled={loading}
+          disabled={!canSubmit}
         >
           {loading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
             <>
-              <Text style={styles.primaryBtnText}>Create Account</Text>
-              <Feather name="check" size={18} color="#fff" />
+              <Text style={[styles.primaryBtnText, { color: canSubmit ? "#fff" : colors.mutedForeground }]}>
+                Create Account
+              </Text>
+              <Feather name="check" size={18} color={canSubmit ? "#fff" : colors.mutedForeground} />
             </>
           )}
         </Pressable>
@@ -359,7 +446,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontFamily: "Inter_700Bold", letterSpacing: -0.4 },
   subtitle: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 4 },
 
-  form: { gap: 12, marginTop: 4 },
+  form: { gap: 14, marginTop: 4 },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -372,6 +459,32 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
   hint: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 4, marginLeft: 2 },
 
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+    flexShrink: 0,
+  },
+  checkLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 20,
+  },
+  link: {
+    fontFamily: "Inter_500Medium",
+    textDecorationLine: "underline",
+  },
+
   primaryBtn: {
     borderRadius: 12,
     paddingVertical: 15,
@@ -379,9 +492,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
-    marginTop: 4,
+    marginTop: 2,
   },
-  primaryBtnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  primaryBtnText: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
 
   footerRow: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
   footerText: { fontSize: 14, fontFamily: "Inter_400Regular" },
