@@ -28,6 +28,8 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   updateProfile: (updates: ProfileUpdates) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
+  getEmailByHandle: (handle: string) => Promise<string | null>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -51,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
+        .select("id, email, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
         .eq("id", userId)
         .single();
 
@@ -116,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { error: profileError } = await supabase.from("profiles").insert({
         id: data.user.id,
+        email: email.trim().toLowerCase(),
         handle: handle.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_"),
         display_name: displayName.trim(),
       });
@@ -149,9 +152,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const getEmailByHandle = async (handle: string): Promise<string | null> => {
+    try {
+      const clean = handle.replace(/^@/, "").trim().toLowerCase();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("handle", clean)
+        .maybeSingle();
+      if (error || !data?.email) return null;
+      return data.email as string;
+    } catch {
+      return null;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        { redirectTo: "afuchat-lite://reset-password" }
+      );
+      return { error: error?.message ?? null };
+    } catch (e: any) {
+      return { error: e?.message ?? "Reset failed" };
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ session, user, profile, loading, signIn, signUp, signOut, updateProfile, refreshProfile }}
+      value={{
+        session, user, profile, loading,
+        signIn, signUp, signOut, updateProfile, refreshProfile,
+        getEmailByHandle, resetPassword,
+      }}
     >
       {children}
     </AuthContext.Provider>
