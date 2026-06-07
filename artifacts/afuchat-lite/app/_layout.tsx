@@ -10,10 +10,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { StyleSheet, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { OfflineProvider } from "@/context/OfflineContext";
@@ -51,6 +53,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -62,7 +65,14 @@ export default function RootLayout() {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!fontsLoaded && !fontError) {
+    const bg = colorScheme === "dark" ? "#06090F" : "#FFFFFF";
+    return (
+      <View style={[styles.splash, { backgroundColor: bg }]}>
+        <AfuChatLogo size={80} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -71,35 +81,35 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <UnreadProvider>
-              <OfflineProvider>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <KeyboardProvider>
-                    <AuthGate>
-                      <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
-                        <Stack.Screen name="index" />
-                        <Stack.Screen name="(auth)" />
-                        <Stack.Screen name="(tabs)" />
-                        <Stack.Screen
-                          name="chat/[id]"
-                          options={{ headerShown: true, animation: "slide_from_right" }}
-                        />
-                        <Stack.Screen
-                          name="profile/edit"
-                          options={{ headerShown: false, animation: "slide_from_right" }}
-                        />
-                        <Stack.Screen
-                          name="profile/[id]"
-                          options={{ headerShown: false, animation: "slide_from_right" }}
-                        />
-                        <Stack.Screen
-                          name="new-chat"
-                          options={{ headerShown: false, animation: "slide_from_bottom" }}
-                        />
-                      </Stack>
-                    </AuthGate>
-                  </KeyboardProvider>
-                </GestureHandlerRootView>
-              </OfflineProvider>
+                <OfflineProvider>
+                  <GestureHandlerRootView style={{ flex: 1 }}>
+                    <KeyboardProvider>
+                      <AuthGate>
+                        <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+                          <Stack.Screen name="index" />
+                          <Stack.Screen name="(auth)" />
+                          <Stack.Screen name="(tabs)" />
+                          <Stack.Screen
+                            name="chat/[id]"
+                            options={{ headerShown: true, animation: "slide_from_right" }}
+                          />
+                          <Stack.Screen
+                            name="profile/edit"
+                            options={{ headerShown: false, animation: "slide_from_right" }}
+                          />
+                          <Stack.Screen
+                            name="profile/[id]"
+                            options={{ headerShown: false, animation: "slide_from_right" }}
+                          />
+                          <Stack.Screen
+                            name="new-chat"
+                            options={{ headerShown: false, animation: "slide_from_bottom" }}
+                          />
+                        </Stack>
+                      </AuthGate>
+                    </KeyboardProvider>
+                  </GestureHandlerRootView>
+                </OfflineProvider>
               </UnreadProvider>
             </AuthProvider>
           </QueryClientProvider>
@@ -108,3 +118,11 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  splash: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

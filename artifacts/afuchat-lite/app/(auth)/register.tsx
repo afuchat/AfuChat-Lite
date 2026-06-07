@@ -6,14 +6,13 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  KeyboardAvoidingView,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AfuChatLogo } from "@/components/AfuChatLogo";
@@ -105,93 +104,91 @@ export default function RegisterScreen() {
   const progress = (step + 1) / STEPS.length;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="height">
-        <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Brand */}
-          <View style={styles.logoWrap}>
-            <AfuChatLogo size={52} />
-            <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
-          </View>
+    <KeyboardAwareScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={[
+        styles.scroll,
+        { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 },
+      ]}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      bottomOffset={24}
+    >
+      {/* Brand */}
+      <View style={styles.logoWrap}>
+        <AfuChatLogo size={52} />
+        <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
+      </View>
 
-          {/* Header row */}
-          <View style={styles.header}>
-            <Pressable onPress={goBack} hitSlop={12}>
-              <Feather name="arrow-left" size={22} color={colors.foreground} />
-            </Pressable>
-            <View style={styles.stepInfo}>
-              <Text style={[styles.stepLabel, { color: colors.mutedForeground }]}>
-                Step {step + 1} of {STEPS.length}
-              </Text>
-              <Text style={[styles.stepName, { color: colors.foreground }]}>{STEPS[step]}</Text>
-            </View>
-          </View>
+      {/* Header row */}
+      <View style={styles.header}>
+        <Pressable onPress={goBack} hitSlop={12}>
+          <Feather name="arrow-left" size={22} color={colors.foreground} />
+        </Pressable>
+        <View style={styles.stepInfo}>
+          <Text style={[styles.stepLabel, { color: colors.mutedForeground }]}>
+            Step {step + 1} of {STEPS.length}
+          </Text>
+          <Text style={[styles.stepName, { color: colors.foreground }]}>{STEPS[step]}</Text>
+        </View>
+      </View>
 
-          {/* Progress bar */}
-          <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
-            <Animated.View
-              style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: colors.primary }]}
-            />
-          </View>
+      {/* Progress bar */}
+      <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
+        <Animated.View
+          style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: colors.primary }]}
+        />
+      </View>
 
-          {/* Step content — flat, no card */}
-          <Animated.View
-            style={{
-              opacity: slideAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] }),
-              transform: [{
-                translateX: slideAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -20, 0] }),
-              }],
-            }}
-          >
-            {step === 0 ? (
-              <Step1
-                displayName={displayName}
-                handle={handle}
-                setDisplayName={setDisplayName}
-                setHandle={setHandle}
-                handleRef={handleRef}
-                onNext={goNext}
-                colors={colors}
-              />
-            ) : (
-              <Step2
-                email={email}
-                password={password}
-                confirmPassword={confirmPassword}
-                showPass={showPass}
-                showConfirm={showConfirm}
-                setEmail={setEmail}
-                setPassword={setPassword}
-                setConfirmPassword={setConfirmPassword}
-                setShowPass={setShowPass}
-                setShowConfirm={setShowConfirm}
-                emailRef={emailRef}
-                passwordRef={passwordRef}
-                confirmRef={confirmRef}
-                loading={loading}
-                onSubmit={handleRegister}
-                colors={colors}
-              />
-            )}
-          </Animated.View>
+      {/* Step content */}
+      <Animated.View
+        style={{
+          opacity: slideAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] }),
+          transform: [{
+            translateX: slideAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -20, 0] }),
+          }],
+        }}
+      >
+        {step === 0 ? (
+          <Step1
+            displayName={displayName}
+            handle={handle}
+            setDisplayName={setDisplayName}
+            setHandle={setHandle}
+            handleRef={handleRef}
+            onNext={goNext}
+            colors={colors}
+          />
+        ) : (
+          <Step2
+            email={email}
+            password={password}
+            confirmPassword={confirmPassword}
+            showPass={showPass}
+            showConfirm={showConfirm}
+            setEmail={setEmail}
+            setPassword={setPassword}
+            setConfirmPassword={setConfirmPassword}
+            setShowPass={setShowPass}
+            setShowConfirm={setShowConfirm}
+            emailRef={emailRef}
+            passwordRef={passwordRef}
+            confirmRef={confirmRef}
+            loading={loading}
+            onSubmit={handleRegister}
+            colors={colors}
+          />
+        )}
+      </Animated.View>
 
-          {/* Footer link */}
-          <View style={styles.footerRow}>
-            <Text style={[styles.footerText, { color: colors.mutedForeground }]}>Already have an account? </Text>
-            <Pressable onPress={() => router.replace("/(auth)/login")}>
-              <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+      {/* Footer link */}
+      <View style={styles.footerRow}>
+        <Text style={[styles.footerText, { color: colors.mutedForeground }]}>Already have an account? </Text>
+        <Pressable onPress={() => router.replace("/(auth)/login")}>
+          <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
+        </Pressable>
+      </View>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -345,7 +342,6 @@ const InputField = React.forwardRef<TextInput, InputFieldProps>(
 );
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 28, gap: 24 },
 
   logoWrap: { alignItems: "center", gap: 6 },

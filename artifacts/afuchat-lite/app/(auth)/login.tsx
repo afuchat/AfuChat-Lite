@@ -5,14 +5,13 @@ import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AfuChatLogo } from "@/components/AfuChatLogo";
@@ -46,119 +45,116 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="height">
-        <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            { paddingTop: insets.top + 56, paddingBottom: insets.bottom + 32 },
+    <KeyboardAwareScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={[
+        styles.scroll,
+        { paddingTop: insets.top + 56, paddingBottom: insets.bottom + 32 },
+      ]}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      bottomOffset={24}
+    >
+      {/* Brand */}
+      <View style={styles.logoWrap}>
+        <AfuChatLogo size={72} />
+        <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
+        <Text style={[styles.tagline, { color: colors.mutedForeground }]}>Fast. Simple. Yours.</Text>
+      </View>
+
+      {/* Heading */}
+      <View style={styles.headingWrap}>
+        <Text style={[styles.title, { color: colors.foreground }]}>Welcome back</Text>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Sign in to your account</Text>
+      </View>
+
+      {/* Form */}
+      <View style={styles.form}>
+        <View
+          style={[
+            styles.inputRow,
+            { backgroundColor: colors.muted, borderColor: emailFocused ? colors.primary : colors.border },
           ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
-          {/* Brand */}
-          <View style={styles.logoWrap}>
-            <AfuChatLogo size={72} />
-            <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
-            <Text style={[styles.tagline, { color: colors.mutedForeground }]}>Fast. Simple. Yours.</Text>
-          </View>
+          <Feather name="mail" size={18} color={emailFocused ? colors.primary : colors.mutedForeground} />
+          <TextInput
+            style={[styles.input, { color: colors.foreground }]}
+            placeholder="Email address"
+            placeholderTextColor={colors.mutedForeground}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
+          />
+        </View>
 
-          {/* Heading */}
-          <View style={styles.headingWrap}>
-            <Text style={[styles.title, { color: colors.foreground }]}>Welcome back</Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Sign in to your account</Text>
-          </View>
-
-          {/* Form */}
-          <View style={styles.form}>
-            <View
-              style={[
-                styles.inputRow,
-                { backgroundColor: colors.muted, borderColor: emailFocused ? colors.primary : colors.border },
-              ]}
-            >
-              <Feather name="mail" size={18} color={emailFocused ? colors.primary : colors.mutedForeground} />
-              <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="Email address"
-                placeholderTextColor={colors.mutedForeground}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()}
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
-              />
-            </View>
-
-            <View
-              style={[
-                styles.inputRow,
-                { backgroundColor: colors.muted, borderColor: passFocused ? colors.primary : colors.border },
-              ]}
-            >
-              <Feather name="lock" size={18} color={passFocused ? colors.primary : colors.mutedForeground} />
-              <TextInput
-                ref={passwordRef}
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="Password"
-                placeholderTextColor={colors.mutedForeground}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPass}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-                onFocus={() => setPassFocused(true)}
-                onBlur={() => setPassFocused(false)}
-              />
-              <Pressable onPress={() => setShowPass(!showPass)} hitSlop={10}>
-                <Feather name={showPass ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
-              </Pressable>
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.signInBtn,
-                { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
-              ]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.signInBtnText}>Sign In</Text>
-              )}
-            </Pressable>
-          </View>
-
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>New to AfuChat?</Text>
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          </View>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.createBtn,
-              { borderColor: colors.primary, opacity: pressed ? 0.88 : 1 },
-            ]}
-            onPress={() => router.push("/(auth)/register")}
-          >
-            <Text style={[styles.createBtnText, { color: colors.primary }]}>Create an Account</Text>
+        <View
+          style={[
+            styles.inputRow,
+            { backgroundColor: colors.muted, borderColor: passFocused ? colors.primary : colors.border },
+          ]}
+        >
+          <Feather name="lock" size={18} color={passFocused ? colors.primary : colors.mutedForeground} />
+          <TextInput
+            ref={passwordRef}
+            style={[styles.input, { color: colors.foreground }]}
+            placeholder="Password"
+            placeholderTextColor={colors.mutedForeground}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPass}
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
+            onFocus={() => setPassFocused(true)}
+            onBlur={() => setPassFocused(false)}
+          />
+          <Pressable onPress={() => setShowPass(!showPass)} hitSlop={10}>
+            <Feather name={showPass ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
           </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.signInBtn,
+            { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
+          ]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.signInBtnText}>Sign In</Text>
+          )}
+        </Pressable>
+      </View>
+
+      {/* Divider */}
+      <View style={styles.dividerRow}>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>New to AfuChat?</Text>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      </View>
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.createBtn,
+          { borderColor: colors.primary, opacity: pressed ? 0.88 : 1 },
+        ]}
+        onPress={() => router.push("/(auth)/register")}
+      >
+        <Text style={[styles.createBtnText, { color: colors.primary }]}>Create an Account</Text>
+      </Pressable>
+    </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 28, gap: 28 },
 
   logoWrap: { alignItems: "center", gap: 8 },
