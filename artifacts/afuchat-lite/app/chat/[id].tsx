@@ -16,7 +16,6 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
-import { OfflineBanner } from "@/components/OfflineBanner";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
@@ -396,7 +395,7 @@ export default function ChatScreen() {
     setMessages((prev) => [optimistic, ...prev]);
 
     if (!netOnline) {
-      await queueMessage({ localId, chatId: id, senderId: user.id, content, sentAt: now });
+      await queueMessage({ localId, chatId: id, senderId: user.id, content, replyToId: replyId, sentAt: now });
       return;
     }
 
@@ -450,8 +449,6 @@ export default function ChatScreen() {
         behavior="padding"
         keyboardVerticalOffset={0}
       >
-        <OfflineBanner />
-
         {loading ? (
           <View style={styles.centered}>
             <ActivityIndicator color={colors.primary} />

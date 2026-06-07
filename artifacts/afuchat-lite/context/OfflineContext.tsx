@@ -15,6 +15,7 @@ export type PendingMessage = {
   chatId: string;
   senderId: string;
   content: string;
+  replyToId: string | null;
   sentAt: string;
 };
 
@@ -26,9 +27,7 @@ type OfflineContextType = {
 };
 
 const OfflineContext = createContext<OfflineContextType | null>(null);
-const QUEUE_KEY = "afuchat_lite_offline_queue_v1";
-
-// Android's own connectivity check endpoint — returns 204 when online, fast
+const QUEUE_KEY = "afuchat_lite_offline_queue_v2";
 const PROBE_URL = "https://connectivity.gstatic.com/generate_204";
 
 export function OfflineProvider({ children }: { children: React.ReactNode }) {
@@ -59,16 +58,14 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
           cache: "no-store",
         });
         clearTimeout(timer);
-        // 204 = online; anything reachable counts as online
         if (mounted.current) setIsOnline(res.status < 500);
       } catch {
         if (mounted.current) setIsOnline(false);
       }
     };
 
-    // Small delay so app doesn't flash "offline" on startup before the first probe completes
-    const initial = setTimeout(probe, 1500);
-    const interval = setInterval(probe, 20_000);
+    const initial = setTimeout(probe, 800);
+    const interval = setInterval(probe, 15_000);
     return () => { clearTimeout(initial); clearInterval(interval); };
   }, []);
 
@@ -97,9 +94,17 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
             chat_id: msg.chatId,
             sender_id: msg.senderId,
             encrypted_content: msg.content,
+            reply_to_message_id: msg.replyToId ?? null,
             sent_at: msg.sentAt,
           });
-          if (error) remaining.push(msg);
+          if (!error) {
+            await supabase
+              .from("chats")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", msg.chatId);
+          } else {
+            remaining.push(msg);
+          }
         } catch {
           remaining.push(msg);
         }
@@ -117,7 +122,9 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   }, [isOnline]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <OfflineContext.Provider value={{ isOnline, pendingCount: pending.length, queueMessage, syncPending }}>
+    <OfflineContext.Provider
+      value={{ isOnline, pendingCount: pending.length, queueMessage, syncPending }}
+    >
       {children}
     </OfflineContext.Provider>
   );

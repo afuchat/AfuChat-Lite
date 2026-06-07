@@ -9,47 +9,33 @@ import { useColors } from "@/hooks/useColors";
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 
-function TabItem({
+function TabPill({
   icon,
   iconFocused,
-  label,
   focused,
   color,
   badge,
 }: {
   icon: IoniconsName;
   iconFocused: IoniconsName;
-  label: string;
   focused: boolean;
   color: string;
   badge?: number;
 }) {
   return (
-    <View
-      style={[
-        styles.tabItem,
-        focused && { backgroundColor: color + "20" },
-      ]}
-    >
+    <View style={[styles.pill, focused && styles.pillActive]}>
       <View style={{ position: "relative" }}>
-        <Ionicons name={focused ? iconFocused : icon} size={22} color={color} />
+        <Ionicons
+          name={focused ? iconFocused : icon}
+          size={21}
+          color={focused ? "#fff" : color}
+        />
         {badge != null && badge > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{badge > 9 ? "9+" : badge}</Text>
           </View>
         )}
       </View>
-      <Text
-        style={[
-          styles.label,
-          {
-            color,
-            fontFamily: focused ? "Inter_700Bold" : "Inter_500Medium",
-          },
-        ]}
-      >
-        {label}
-      </Text>
     </View>
   );
 }
@@ -68,22 +54,22 @@ export default function TabLayout() {
         tabBarShowLabel: false,
         tabBarStyle: {
           position: "absolute",
-          bottom: insets.bottom + 14,
-          left: 48,
-          right: 48,
-          height: 68,
-          borderRadius: 34,
+          bottom: insets.bottom + 12,
+          left: 72,
+          right: 72,
+          height: 52,
+          borderRadius: 26,
           backgroundColor: colors.tabBar,
           borderTopWidth: 0,
-          elevation: 20,
+          elevation: 24,
           shadowColor: "#000",
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.2,
-          shadowRadius: 24,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.18,
+          shadowRadius: 20,
           overflow: "hidden",
         },
         tabBarItemStyle: {
-          height: 68,
+          height: 52,
           paddingVertical: 0,
         },
       }}
@@ -92,10 +78,9 @@ export default function TabLayout() {
         name="chats"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabItem
+            <TabPill
               icon="chatbubbles-outline"
               iconFocused="chatbubbles"
-              label="Chats"
               focused={focused}
               color={color}
               badge={pendingCount}
@@ -107,10 +92,9 @@ export default function TabLayout() {
         name="feed"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabItem
+            <TabPill
               icon="albums-outline"
               iconFocused="albums"
-              label="Feed"
               focused={focused}
               color={color}
             />
@@ -121,10 +105,9 @@ export default function TabLayout() {
         name="profile"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabItem
+            <TabPill
               icon="person-circle-outline"
               iconFocused="person-circle"
-              label="Profile"
               focused={focused}
               color={color}
             />
@@ -136,31 +119,34 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabItem: {
+  pill: {
+    width: 42,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 24,
-    minWidth: 64,
   },
-  label: {
-    fontSize: 11,
+  pillActive: {
+    backgroundColor: "#1E90FF",
+    shadowColor: "#1E90FF",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
   },
   badge: {
     position: "absolute",
-    top: -3,
-    right: -6,
+    top: -4,
+    right: -7,
     backgroundColor: "#EF4444",
     borderRadius: 8,
-    minWidth: 15,
-    height: 15,
+    minWidth: 14,
+    height: 14,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 3,
     borderWidth: 1.5,
     borderColor: "#fff",
   },
-  badgeText: { color: "#fff", fontSize: 8, fontWeight: "700" },
+  badgeText: { color: "#fff", fontSize: 7, fontWeight: "700" },
 });

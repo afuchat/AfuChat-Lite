@@ -15,7 +15,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
-import { OfflineBanner } from "@/components/OfflineBanner";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { Post, Profile, getDisplayName, supabase } from "@/lib/supabase";
@@ -237,8 +236,6 @@ export default function FeedScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <OfflineBanner />
-
       <View
         style={[
           styles.header,
