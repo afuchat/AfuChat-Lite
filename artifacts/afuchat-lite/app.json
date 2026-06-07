@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "AfuChat Lite",
+    "slug": "afuchat-lite",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "afuchat-lite",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E90FF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.afuchat.lite"
+    },
+    "android": {
+      "package": "com.afuchat.lite",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#1E90FF"
+      }
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

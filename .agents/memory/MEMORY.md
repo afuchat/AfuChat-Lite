@@ -1,0 +1,1 @@
+- [AfuChat Lite DB schema](afuchat-lite-schema.md) — profiles use display_name/handle/bio; app uses chat_messages table not messages

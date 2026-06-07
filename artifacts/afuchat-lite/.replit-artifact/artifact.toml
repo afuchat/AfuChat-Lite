@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "AfuChat Lite"
+version = "1.0.0"
+id = "artifacts/afuchat-lite"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 21282
+
+[services.development]
+run = "pnpm --filter @workspace/afuchat-lite run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/afuchat-lite", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/afuchat-lite", "run", "serve" ]
+
+[services.env]
+PORT = "21282"
+BASE_PATH = "/"

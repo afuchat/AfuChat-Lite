@@ -1,6 +1,6 @@
-# [Project name]
+# AfuChat Lite
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A lightweight Android-only chat app built on Expo, backed by the AfuChat Supabase project. Supports real-time messaging, offline queuing, user discovery, and auth.
 
 ## Run & Operate
 
@@ -19,18 +19,38 @@ _Replace the heading above with the project's name, and this line with one sente
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- Mobile: Expo SDK 53, expo-router, Supabase JS client
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/afuchat-lite/` — Expo mobile app (Android-focused)
+  - `app/(auth)/` — login & register screens
+  - `app/(tabs)/` — chats, contacts, profile tabs
+  - `app/chat/[id].tsx` — individual chat screen
+  - `lib/supabase.ts` — Supabase client + TypeScript types
+  - `context/AuthContext.tsx` — auth state
+  - `context/OfflineContext.tsx` — offline message queue
+  - `components/` — Avatar, MessageBubble, ChatListItem, OfflineBanner
+  - `hooks/useColors.ts` — color scheme hook
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Uses existing AfuChat Supabase project (`rhnsjqqtdzlkvqazfcbg`, eu-north-1)
+- Existing `profiles` table uses `display_name`/`handle`/`bio`/`last_seen` (not `full_name`/`username`)
+- Created fresh `conversations`, `conversation_participants`, `chat_messages` tables (NOT the existing `messages` table which has a different schema)
+- Offline support: messages queued in AsyncStorage, synced when back online (ping-based detection)
+- Real-time via Supabase channels on `chat_messages` and `conversations`
+- Dark gradient auth screens, light/dark adaptive chat UI via `useColors` hook
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Register/login with email + password
+- Browse all users by display name or @handle  
+- Start 1-on-1 conversations
+- Real-time chat with optimistic message delivery
+- Offline message queuing (synced when back online)
+- Profile view/edit (display_name, bio)
+- Online status via `last_seen` field
 
 ## User preferences
 
@@ -38,7 +58,11 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- **Schema mismatch**: existing `messages` table has `chat_id`/`encrypted_content`/`sent_at`. App uses `chat_messages` table instead.
+- **Profiles columns**: use `display_name`, `handle`, `bio`, `last_seen` (NOT `full_name`, `username`, `status_text`, `is_online`)
+- **@react-native-community/netinfo**: installed 12.0.1 (Expo expects 11.4.1) — app uses custom ping fallback instead of NetInfo
+- **Package name**: `com.afuchat.lite`
+- **Supabase project**: `rhnsjqqtdzlkvqazfcbg`, region eu-north-1
 
 ## Pointers
 

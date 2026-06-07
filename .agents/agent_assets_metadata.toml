@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "mVLpFWv2k2XL9LVYwTePD"
+uri = "file://artifacts/afuchat-lite/assets/images/splash-icon.png"
+type = "image"
+title = "afuchat splash"
