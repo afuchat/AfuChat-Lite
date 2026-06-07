@@ -1,82 +1,91 @@
+/**
+ * AfuChat Lite brand tokens — locked to the app icon palette.
+ * Primary blue: #1E90FF  |  Dark navy BG: #06090F
+ */
 const colors = {
   light: {
-    text: "#0D1117",
+    text: "#0A0F1E",
     tint: "#1E90FF",
 
     background: "#FFFFFF",
-    foreground: "#0D1117",
+    foreground: "#0A0F1E",
 
-    card: "#F4F6F9",
-    cardForeground: "#0D1117",
+    card: "#F5F7FA",
+    cardForeground: "#0A0F1E",
 
     primary: "#1E90FF",
     primaryForeground: "#FFFFFF",
 
-    secondary: "#EBF4FF",
-    secondaryForeground: "#1A6FCC",
+    secondary: "#E8F3FF",
+    secondaryForeground: "#1565CC",
 
-    muted: "#F0F4F8",
-    mutedForeground: "#6B7A8D",
+    muted: "#F0F4F9",
+    mutedForeground: "#6E7B8E",
 
-    accent: "#E3F0FF",
-    accentForeground: "#1A6FCC",
+    accent: "#DCF0FF",
+    accentForeground: "#1565CC",
 
     destructive: "#EF4444",
     destructiveForeground: "#FFFFFF",
 
-    border: "#E2E8F0",
-    input: "#E2E8F0",
+    border: "#E4E9F0",
+    input: "#E4E9F0",
 
-    // Chat specific
     myBubble: "#1E90FF",
     myBubbleText: "#FFFFFF",
-    theirBubble: "#F0F4F8",
-    theirBubbleText: "#0D1117",
+    theirBubble: "#F0F4F9",
+    theirBubbleText: "#0A0F1E",
 
     online: "#22C55E",
     offline: "#94A3B8",
     pending: "#F59E0B",
+
+    tabBar: "#FFFFFF",
+    tabBarBorder: "#E4E9F0",
   },
 
   dark: {
-    text: "#F1F5F9",
-    tint: "#4DB8FF",
+    text: "#EDF2FB",
+    tint: "#4EAEFF",
 
-    background: "#0D1117",
-    foreground: "#F1F5F9",
+    background: "#06090F",
+    foreground: "#EDF2FB",
 
-    card: "#161B22",
-    cardForeground: "#F1F5F9",
+    card: "#0D1526",
+    cardForeground: "#EDF2FB",
 
-    primary: "#4DB8FF",
-    primaryForeground: "#0D1117",
+    primary: "#1E90FF",
+    primaryForeground: "#FFFFFF",
 
-    secondary: "#1C2A3A",
-    secondaryForeground: "#93C5FD",
+    secondary: "#0E2040",
+    secondaryForeground: "#7EC8FF",
 
-    muted: "#1C2A3A",
-    mutedForeground: "#64748B",
+    muted: "#111C30",
+    mutedForeground: "#5C7A99",
 
-    accent: "#1E3A5F",
-    accentForeground: "#93C5FD",
+    accent: "#102D52",
+    accentForeground: "#7EC8FF",
 
-    destructive: "#EF4444",
+    destructive: "#F87171",
     destructiveForeground: "#FFFFFF",
 
-    border: "#21262D",
-    input: "#21262D",
+    border: "#172035",
+    input: "#172035",
 
-    myBubble: "#1D6FCC",
+    myBubble: "#1565CC",
     myBubbleText: "#FFFFFF",
-    theirBubble: "#21262D",
-    theirBubbleText: "#F1F5F9",
+    theirBubble: "#111C30",
+    theirBubbleText: "#EDF2FB",
 
     online: "#22C55E",
     offline: "#475569",
     pending: "#F59E0B",
+
+    tabBar: "#06090F",
+    tabBarBorder: "#172035",
   },
 
-  radius: 12,
+  radius: 14,
 };
 
 export default colors;

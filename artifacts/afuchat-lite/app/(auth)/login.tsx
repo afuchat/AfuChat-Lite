@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -18,10 +19,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
 
 export default function LoginScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signIn } = useAuth();
@@ -30,6 +29,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passFocused, setPassFocused] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
@@ -37,17 +38,15 @@ export default function LoginScreen() {
       Alert.alert("Missing fields", "Please enter your email and password.");
       return;
     }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
     const { error } = await signIn(email.trim().toLowerCase(), password);
     setLoading(false);
-    if (error) Alert.alert("Login failed", error);
+    if (error) Alert.alert("Sign in failed", error);
   };
 
   return (
-    <LinearGradient
-      colors={["#0D1117", "#0D2A4A", "#0D1117"]}
-      style={styles.gradient}
-    >
+    <LinearGradient colors={["#06090F", "#0A1A36", "#06090F"]} style={styles.gradient}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -55,35 +54,36 @@ export default function LoginScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 },
+            { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 32 },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Logo */}
           <View style={styles.logoWrap}>
-            <Image
-              source={require("@/assets/images/icon.png")}
-              style={styles.logo}
-            />
+            <View style={styles.iconShadowWrap}>
+              <Image
+                source={require("@/assets/images/icon.png")}
+                style={styles.logo}
+              />
+            </View>
             <Text style={styles.appName}>AfuChat Lite</Text>
             <Text style={styles.tagline}>Fast. Simple. Yours.</Text>
           </View>
 
+          {/* Card */}
           <View style={styles.card}>
-            <Text style={[styles.title, { color: colors.foreground }]}>
-              Welcome back
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-              Sign in to your account
-            </Text>
+            <Text style={styles.cardTitle}>Welcome back</Text>
+            <Text style={styles.cardSubtitle}>Sign in to your account</Text>
 
             <View style={styles.form}>
-              <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.muted }]}>
-                <Feather name="mail" size={18} color={colors.mutedForeground} />
+              {/* Email */}
+              <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
+                <Feather name="mail" size={18} color={emailFocused ? "#1E90FF" : "#5C7A99"} />
                 <TextInput
-                  style={[styles.input, { color: colors.foreground }]}
-                  placeholder="Email"
-                  placeholderTextColor={colors.mutedForeground}
+                  style={styles.input}
+                  placeholder="Email address"
+                  placeholderTextColor="#5C7A99"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -91,54 +91,63 @@ export default function LoginScreen() {
                   autoCorrect={false}
                   returnKeyType="next"
                   onSubmitEditing={() => passwordRef.current?.focus()}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
                 />
               </View>
 
-              <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.muted }]}>
-                <Feather name="lock" size={18} color={colors.mutedForeground} />
+              {/* Password */}
+              <View style={[styles.inputRow, passFocused && styles.inputRowFocused]}>
+                <Feather name="lock" size={18} color={passFocused ? "#1E90FF" : "#5C7A99"} />
                 <TextInput
                   ref={passwordRef}
-                  style={[styles.input, { color: colors.foreground }]}
+                  style={styles.input}
                   placeholder="Password"
-                  placeholderTextColor={colors.mutedForeground}
+                  placeholderTextColor="#5C7A99"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPass}
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
+                  onFocus={() => setPassFocused(true)}
+                  onBlur={() => setPassFocused(false)}
                 />
-                <Pressable onPress={() => setShowPass(!showPass)} hitSlop={8}>
+                <Pressable onPress={() => setShowPass(!showPass)} hitSlop={10}>
                   <Feather
                     name={showPass ? "eye-off" : "eye"}
                     size={18}
-                    color={colors.mutedForeground}
+                    color="#5C7A99"
                   />
                 </Pressable>
               </View>
 
+              {/* Sign In button */}
               <Pressable
-                style={({ pressed }) => [
-                  styles.btn,
-                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-                ]}
+                style={({ pressed }) => [styles.signInBtn, { opacity: pressed ? 0.88 : 1 }]}
                 onPress={handleLogin}
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.btnText}>Sign In</Text>
+                  <Text style={styles.signInBtnText}>Sign In</Text>
                 )}
               </Pressable>
             </View>
 
-            <Pressable onPress={() => router.push("/(auth)/register")} style={styles.switchRow}>
-              <Text style={[styles.switchText, { color: colors.mutedForeground }]}>
-                Don't have an account?{" "}
-              </Text>
-              <Text style={[styles.switchLink, { color: colors.primary }]}>
-                Create one
-              </Text>
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>New to AfuChat?</Text>
+              <View style={styles.divider} />
+            </View>
+
+            {/* Create account */}
+            <Pressable
+              style={({ pressed }) => [styles.createBtn, { opacity: pressed ? 0.88 : 1 }]}
+              onPress={() => router.push("/(auth)/register")}
+            >
+              <Text style={styles.createBtnText}>Create an Account</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -149,72 +158,120 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 32 },
-  logoWrap: { alignItems: "center", gap: 10 },
-  logo: { width: 80, height: 80, borderRadius: 20 },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 36 },
+
+  logoWrap: { alignItems: "center", gap: 12 },
+  iconShadowWrap: {
+    shadowColor: "#1E90FF",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  logo: { width: 84, height: 84, borderRadius: 22 },
   appName: {
-    fontSize: 26,
+    fontSize: 28,
     fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
   tagline: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.55)",
+    color: "rgba(255,255,255,0.4)",
+    letterSpacing: 0.2,
   },
+
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#0D1526",
     borderRadius: 24,
     padding: 24,
-    gap: 4,
+    borderWidth: 1,
+    borderColor: "#172035",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.4,
+    shadowRadius: 32,
+    elevation: 12,
+    gap: 6,
   },
-  title: {
-    fontSize: 22,
+  cardTitle: {
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
-    letterSpacing: -0.3,
+    color: "#EDF2FB",
+    letterSpacing: -0.4,
   },
-  subtitle: {
+  cardSubtitle: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    marginBottom: 8,
+    color: "#5C7A99",
+    marginBottom: 6,
   },
-  form: { gap: 12, marginTop: 8 },
-  inputWrap: {
+
+  form: { gap: 12, marginTop: 4 },
+  inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
+    backgroundColor: "#111C30",
+    borderWidth: 1.5,
+    borderColor: "#172035",
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
     gap: 10,
+  },
+  inputRowFocused: {
+    borderColor: "#1E90FF",
+    backgroundColor: "#0E2040",
   },
   input: {
     flex: 1,
     fontSize: 15,
     fontFamily: "Inter_400Regular",
+    color: "#EDF2FB",
   },
-  btn: {
-    borderRadius: 12,
-    paddingVertical: 14,
+  signInBtn: {
+    backgroundColor: "#1E90FF",
+    borderRadius: 14,
+    paddingVertical: 15,
     alignItems: "center",
     marginTop: 4,
+    shadowColor: "#1E90FF",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
   },
-  btnText: {
+  signInBtnText: {
     color: "#fff",
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.1,
   },
-  switchRow: {
+
+  dividerRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 12,
+    alignItems: "center",
+    gap: 10,
+    marginTop: 10,
   },
-  switchText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  switchLink: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  divider: { flex: 1, height: 1, backgroundColor: "#172035" },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "#5C7A99",
+  },
+
+  createBtn: {
+    borderWidth: 1.5,
+    borderColor: "#1E90FF",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  createBtnText: {
+    color: "#1E90FF",
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+  },
 });

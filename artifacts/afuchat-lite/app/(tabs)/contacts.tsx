@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { Profile, getDisplayName, isOnline, supabase } from "@/lib/supabase";
@@ -38,61 +40,61 @@ export default function ContactsScreen() {
     return () => { mounted.current = false; };
   }, []);
 
-  const fetchUsers = useCallback(async (q: string) => {
-    if (!user) return;
-    if (mounted.current) setLoading(true);
-    try {
-      let query = supabase
-        .from("profiles")
-        .select("id, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
-        .neq("id", user.id)
-        .limit(50);
+  const fetchUsers = useCallback(
+    async (q: string) => {
+      if (!user) return;
+      if (mounted.current) setLoading(true);
+      try {
+        let query = supabase
+          .from("profiles")
+          .select("id, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
+          .neq("id", user.id)
+          .limit(60);
 
-      if (q.trim()) {
-        query = query.or(`handle.ilike.%${q.trim()}%,display_name.ilike.%${q.trim()}%`);
-      } else {
-        query = query.order("created_at", { ascending: false });
+        if (q.trim()) {
+          query = query.or(
+            `handle.ilike.%${q.trim()}%,display_name.ilike.%${q.trim()}%`
+          );
+        } else {
+          query = query.order("created_at", { ascending: false });
+        }
+
+        const { data, error: qErr } = await query;
+        if (qErr) throw qErr;
+        if (mounted.current) { setUsers((data as Profile[]) ?? []); setError(null); }
+      } catch (e: any) {
+        if (mounted.current) setError(e?.message ?? "Failed to load people");
+      } finally {
+        if (mounted.current) setLoading(false);
       }
+    },
+    [user]
+  );
 
-      const { data, error: qErr } = await query;
-      if (qErr) throw qErr;
-      if (mounted.current) { setUsers((data as Profile[]) ?? []); setError(null); }
-    } catch (e: any) {
-      if (mounted.current) setError(e?.message ?? "Failed to load users");
-    } finally {
-      if (mounted.current) setLoading(false);
-    }
-  }, [user]);
-
-  // Initial load
   useEffect(() => { fetchUsers(""); }, [fetchUsers]);
-
-  // Debounced search
   useEffect(() => {
     const t = setTimeout(() => fetchUsers(search), 350);
     return () => clearTimeout(t);
   }, [search, fetchUsers]);
 
-  /** Open existing or create a new 1-on-1 chat with otherUser. */
-  const openChat = async (otherUser: Profile) => {
+  const openChat = async (other: Profile) => {
     if (!user || starting) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setStarting(otherUser.id);
-
+    setStarting(other.id);
     try {
       // Find existing 1-on-1 chat
-      const { data: myMemberships } = await supabase
+      const { data: mine } = await supabase
         .from("chat_members")
         .select("chat_id")
         .eq("user_id", user.id);
 
-      const myIds = (myMemberships ?? []).map((r) => r.chat_id);
+      const myIds = (mine ?? []).map((r) => r.chat_id);
 
-      if (myIds.length > 0) {
+      if (myIds.length) {
         const { data: shared } = await supabase
           .from("chat_members")
           .select("chat_id")
-          .eq("user_id", otherUser.id)
+          .eq("user_id", other.id)
           .in("chat_id", myIds);
 
         if (shared?.length) {
@@ -106,34 +108,32 @@ export default function ContactsScreen() {
           if (existing) {
             router.push({
               pathname: "/chat/[id]",
-              params: { id: existing.id, name: getDisplayName(otherUser), isGroup: "0" },
+              params: { id: existing.id, name: getDisplayName(other), isGroup: "0" },
             });
             return;
           }
         }
       }
 
-      // Create new 1-on-1 chat
+      // Create new chat
       const { data: newChat, error: chatErr } = await supabase
         .from("chats")
-        .insert({ is_group: false, created_by: user.id, user_id: otherUser.id })
+        .insert({ is_group: false, created_by: user.id, user_id: other.id })
         .select()
         .single();
 
       if (chatErr) throw chatErr;
       if (!newChat) throw new Error("Chat creation returned empty");
 
-      // Add both members
       const { error: memberErr } = await supabase.from("chat_members").insert([
         { chat_id: newChat.id, user_id: user.id },
-        { chat_id: newChat.id, user_id: otherUser.id },
+        { chat_id: newChat.id, user_id: other.id },
       ]);
-
       if (memberErr) throw memberErr;
 
       router.push({
         pathname: "/chat/[id]",
-        params: { id: newChat.id, name: getDisplayName(otherUser), isGroup: "0" },
+        params: { id: newChat.id, name: getDisplayName(other), isGroup: "0" },
       });
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "Could not open chat. Please try again.");
@@ -143,23 +143,32 @@ export default function ContactsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <OfflineBanner />
+
       {/* Header */}
       <View
         style={[
           styles.header,
-          { paddingTop: insets.top + 12, backgroundColor: colors.background, borderBottomColor: colors.border },
+          {
+            paddingTop: Platform.OS === "android" ? insets.top + 12 : insets.top + 4,
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
         ]}
       >
-        <Text style={[styles.title, { color: colors.foreground }]}>People</Text>
+        <Text style={[styles.screenTitle, { color: colors.foreground }]}>People</Text>
+        <Text style={[styles.userCount, { color: colors.mutedForeground }]}>
+          {users.length > 0 ? `${users.length} users` : ""}
+        </Text>
       </View>
 
-      {/* Search bar */}
-      <View style={[styles.searchWrap, { backgroundColor: colors.muted, marginHorizontal: 16, marginVertical: 10 }]}>
+      {/* Search */}
+      <View style={[styles.searchWrap, { backgroundColor: colors.muted, borderColor: colors.border }]}>
         <Feather name="search" size={16} color={colors.mutedForeground} />
         <TextInput
           style={[styles.searchInput, { color: colors.foreground }]}
-          placeholder="Search name or @handle…"
+          placeholder="Search by name or @handle…"
           placeholderTextColor={colors.mutedForeground}
           value={search}
           onChangeText={setSearch}
@@ -169,32 +178,43 @@ export default function ContactsScreen() {
         />
         {search.length > 0 && (
           <Pressable onPress={() => setSearch("")} hitSlop={10}>
-            <Feather name="x" size={16} color={colors.mutedForeground} />
+            <Feather name="x-circle" size={16} color={colors.mutedForeground} />
           </Pressable>
         )}
       </View>
 
       {loading ? (
-        <View style={styles.center}>
+        <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
-          <Text style={[styles.hint, { color: colors.mutedForeground }]}>Loading people…</Text>
+          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
+            Finding people…
+          </Text>
         </View>
       ) : error ? (
-        <View style={styles.center}>
-          <Feather name="alert-circle" size={36} color={colors.destructive} />
-          <Text style={[styles.hint, { color: colors.destructive }]}>{error}</Text>
-          <Pressable
-            style={[styles.retryBtn, { backgroundColor: colors.primary }]}
-            onPress={() => fetchUsers(search)}
-          >
-            <Text style={styles.retryText}>Retry</Text>
+        <View style={styles.centered}>
+          <View style={[styles.stateIcon, { backgroundColor: colors.muted }]}>
+            <Feather name="alert-circle" size={28} color={colors.destructive} />
+          </View>
+          <Text style={[styles.stateTitle, { color: colors.foreground }]}>
+            Failed to load
+          </Text>
+          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>{error}</Text>
+          <Pressable style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={() => fetchUsers(search)}>
+            <Text style={styles.retryText}>Try Again</Text>
           </Pressable>
         </View>
       ) : users.length === 0 ? (
-        <View style={styles.center}>
-          <Feather name="user-x" size={40} color={colors.mutedForeground} />
-          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-            {search ? "No users match your search" : "No other users yet"}
+        <View style={styles.centered}>
+          <View style={[styles.stateIcon, { backgroundColor: colors.secondary }]}>
+            <Feather name="user-x" size={28} color={colors.primary} />
+          </View>
+          <Text style={[styles.stateTitle, { color: colors.foreground }]}>
+            {search ? "No results" : "No users yet"}
+          </Text>
+          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
+            {search
+              ? `Nobody found for "${search}"`
+              : "Be the first to invite someone!"}
           </Text>
         </View>
       ) : (
@@ -202,36 +222,46 @@ export default function ContactsScreen() {
           data={users}
           keyExtractor={(p) => p.id}
           renderItem={({ item }) => {
-            const online = isOnline(item);
             const name = getDisplayName(item);
+            const online = isOnline(item);
             const busy = starting === item.id;
+
             return (
               <TouchableOpacity
-                style={[styles.row, { borderBottomColor: colors.border }]}
+                style={[styles.userRow, { borderBottomColor: colors.border }]}
                 onPress={() => openChat(item)}
                 disabled={!!starting}
                 activeOpacity={0.7}
               >
                 <Avatar name={name} size={50} isOnline={online} />
-                <View style={styles.info}>
+                <View style={styles.userInfo}>
                   <View style={styles.nameRow}>
-                    <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.userName, { color: colors.foreground }]}
+                      numberOfLines={1}
+                    >
                       {name}
                     </Text>
                     {item.is_verified && (
                       <Feather name="check-circle" size={14} color={colors.primary} />
                     )}
                   </View>
-                  <Text style={[styles.handle, { color: colors.mutedForeground }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.userHandle, { color: colors.primary }]}
+                    numberOfLines={1}
+                  >
                     @{item.handle}
                   </Text>
                   {item.bio ? (
-                    <Text style={[styles.bio, { color: colors.mutedForeground }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.userBio, { color: colors.mutedForeground }]}
+                      numberOfLines={1}
+                    >
                       {item.bio}
                     </Text>
                   ) : null}
                 </View>
-                <View style={styles.action}>
+                <View style={styles.chatBtnWrap}>
                   {busy ? (
                     <ActivityIndicator color={colors.primary} size="small" />
                   ) : (
@@ -243,7 +273,7 @@ export default function ContactsScreen() {
               </TouchableOpacity>
             );
           }}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -252,23 +282,54 @@ export default function ContactsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 10, borderBottomWidth: StyleSheet.hairlineWidth },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
+  screen: { flex: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  screenTitle: { fontSize: 30, fontFamily: "Inter_700Bold", letterSpacing: -0.6 },
+  userCount: { fontSize: 14, fontFamily: "Inter_400Regular", paddingBottom: 4 },
   searchWrap: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    gap: 10,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   searchInput: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
-  hint: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", paddingHorizontal: 32 },
-  retryBtn: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10 },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 40,
+  },
+  stateIcon: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  stateTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold", textAlign: "center" },
+  stateText: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
+  retryBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 11,
+    borderRadius: 12,
+    marginTop: 4,
+  },
   retryText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 15 },
-  row: {
+  userRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
@@ -276,11 +337,17 @@ const styles = StyleSheet.create({
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  info: { flex: 1, gap: 2 },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  name: { fontSize: 16, fontFamily: "Inter_500Medium" },
-  handle: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  bio: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  action: { width: 42, alignItems: "center" },
-  chatBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  userInfo: { flex: 1, gap: 2 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  userName: { fontSize: 16, fontFamily: "Inter_500Medium", flexShrink: 1 },
+  userHandle: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  userBio: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  chatBtnWrap: { width: 44, alignItems: "center" },
+  chatBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

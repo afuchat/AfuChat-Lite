@@ -5,25 +5,43 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ChatListItem } from "@/components/ChatListItem";
+import { Avatar } from "@/components/Avatar";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
-import { Chat, Message, Profile, getDisplayName, supabase } from "@/lib/supabase";
+import { Chat, Profile, getDisplayName, isOnline as profileOnline, supabase } from "@/lib/supabase";
 
 type ChatRow = {
   chat: Chat;
   otherUser: Profile | null;
   lastMessage: string | null;
   lastMessageAt: string | null;
+  unread: boolean;
 };
+
+function formatTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  if (diff < 86_400_000) {
+    const h = d.getHours();
+    const m = d.getMinutes().toString().padStart(2, "0");
+    return `${h % 12 || 12}:${m} ${h >= 12 ? "PM" : "AM"}`;
+  }
+  if (diff < 604_800_000)
+    return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export default function ChatsScreen() {
   const colors = useColors();
@@ -45,7 +63,6 @@ export default function ChatsScreen() {
   const loadChats = useCallback(async () => {
     if (!user) return;
     try {
-      // 1. Get all chat IDs where I'm a member
       const { data: memberships, error: memErr } = await supabase
         .from("chat_members")
         .select("chat_id")
@@ -59,7 +76,6 @@ export default function ChatsScreen() {
 
       const chatIds = memberships.map((m) => m.chat_id);
 
-      // 2. Get the chats
       const { data: chats, error: chatErr } = await supabase
         .from("chats")
         .select("*")
@@ -69,10 +85,8 @@ export default function ChatsScreen() {
 
       if (chatErr) throw chatErr;
 
-      // 3. Enrich each chat
       const enriched: ChatRow[] = await Promise.all(
         (chats ?? []).map(async (chat: Chat) => {
-          // Find other user for 1-on-1
           let otherUser: Profile | null = null;
           if (!chat.is_group) {
             const { data: others } = await supabase
@@ -92,26 +106,25 @@ export default function ChatsScreen() {
             }
           }
 
-          // Latest message
           const { data: msgs } = await supabase
             .from("messages")
-            .select("encrypted_content, sent_at")
+            .select("encrypted_content, sent_at, sender_id")
             .eq("chat_id", chat.id)
             .order("sent_at", { ascending: false })
             .limit(1);
 
-          const lastMsg = msgs?.[0] ?? null;
+          const last = msgs?.[0] ?? null;
 
           return {
             chat,
             otherUser,
-            lastMessage: lastMsg?.encrypted_content ?? null,
-            lastMessageAt: lastMsg?.sent_at ?? chat.updated_at,
+            lastMessage: last?.encrypted_content ?? null,
+            lastMessageAt: last?.sent_at ?? chat.updated_at,
+            unread: last ? last.sender_id !== user.id : false,
           };
         })
       );
 
-      // Sort by most recent message
       enriched.sort((a, b) => {
         const ta = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
         const tb = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
@@ -128,24 +141,16 @@ export default function ChatsScreen() {
 
   useEffect(() => {
     loadChats();
-
-    // Realtime — refresh when messages arrive or chats change
-    const channel = supabase
-      .channel("chats-list-realtime")
+    const ch = supabase
+      .channel("chats-list-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, loadChats)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, loadChats)
       .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(ch); };
   }, [loadChats]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadChats();
-  };
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <OfflineBanner />
 
       {/* Header */}
@@ -153,83 +158,124 @@ export default function ChatsScreen() {
         style={[
           styles.header,
           {
-            paddingTop: insets.top + 12,
+            paddingTop: Platform.OS === "android" ? insets.top + 12 : insets.top + 4,
             backgroundColor: colors.background,
             borderBottomColor: colors.border,
           },
         ]}
       >
-        <Text style={[styles.title, { color: colors.foreground }]}>Chats</Text>
-        <Pressable
-          style={[styles.newBtn, { backgroundColor: colors.primary }]}
+        <Text style={[styles.screenTitle, { color: colors.foreground }]}>Chats</Text>
+        <TouchableOpacity
+          style={[styles.newChatBtn, { backgroundColor: colors.primary }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push("/(tabs)/contacts");
           }}
+          activeOpacity={0.85}
         >
-          <Feather name="edit" size={18} color="#fff" />
-        </Pressable>
+          <Feather name="edit-2" size={16} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {loading ? (
-        <View style={styles.center}>
+        <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-            Loading chats…
+          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
+            Loading your chats…
           </Text>
         </View>
       ) : error ? (
-        <View style={styles.center}>
-          <Feather name="alert-circle" size={40} color={colors.destructive} />
-          <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
-          <Pressable
-            style={[styles.retryBtn, { backgroundColor: colors.primary }]}
-            onPress={loadChats}
-          >
-            <Text style={styles.retryText}>Retry</Text>
+        <View style={styles.centered}>
+          <View style={[styles.stateIcon, { backgroundColor: colors.muted }]}>
+            <Feather name="alert-circle" size={28} color={colors.destructive} />
+          </View>
+          <Text style={[styles.stateTitle, { color: colors.foreground }]}>
+            Something went wrong
+          </Text>
+          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
+            {error}
+          </Text>
+          <Pressable style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={loadChats}>
+            <Text style={styles.retryText}>Try Again</Text>
           </Pressable>
         </View>
       ) : rows.length === 0 ? (
-        <View style={styles.center}>
-          <Feather name="message-circle" size={52} color={colors.mutedForeground} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+        <View style={styles.centered}>
+          <View style={[styles.stateIcon, { backgroundColor: colors.secondary }]}>
+            <Feather name="message-circle" size={32} color={colors.primary} />
+          </View>
+          <Text style={[styles.stateTitle, { color: colors.foreground }]}>
             No conversations yet
           </Text>
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-            Go to People to start your first chat
+          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
+            Head to People to start your first chat
           </Text>
+          <Pressable
+            style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+            onPress={() => router.push("/(tabs)/contacts")}
+          >
+            <Feather name="users" size={16} color="#fff" />
+            <Text style={styles.retryText}>Browse People</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList
           data={rows}
           keyExtractor={(item) => item.chat.id}
-          renderItem={({ item }) => (
-            <ChatListItem
-              chat={item.chat}
-              otherUser={item.otherUser}
-              lastMessage={item.lastMessage}
-              lastMessageAt={item.lastMessageAt}
-              onPress={() => {
-                Haptics.selectionAsync();
-                router.push({
-                  pathname: "/chat/[id]",
-                  params: {
-                    id: item.chat.id,
-                    name: item.chat.is_group
-                      ? item.chat.name ?? "Group"
-                      : getDisplayName(item.otherUser),
-                    isGroup: item.chat.is_group ? "1" : "0",
-                  },
-                });
-              }}
-            />
-          )}
-          ItemSeparatorComponent={() => (
-            <View style={[styles.sep, { backgroundColor: colors.border }]} />
-          )}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
+          renderItem={({ item }) => {
+            const title = item.chat.is_group
+              ? (item.chat.name ?? "Group Chat")
+              : getDisplayName(item.otherUser);
+            const online = !item.chat.is_group && profileOnline(item.otherUser);
+
+            return (
+              <TouchableOpacity
+                style={[styles.chatRow, { borderBottomColor: colors.border }]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  router.push({
+                    pathname: "/chat/[id]",
+                    params: {
+                      id: item.chat.id,
+                      name: title,
+                      isGroup: item.chat.is_group ? "1" : "0",
+                    },
+                  });
+                }}
+                activeOpacity={0.7}
+              >
+                <Avatar name={title} size={52} isOnline={online} />
+                <View style={styles.chatInfo}>
+                  <View style={styles.chatTopRow}>
+                    <Text
+                      style={[styles.chatName, { color: colors.foreground }]}
+                      numberOfLines={1}
+                    >
+                      {title}
+                    </Text>
+                    <Text style={[styles.chatTime, { color: colors.mutedForeground }]}>
+                      {formatTime(item.lastMessageAt)}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.chatPreview,
+                      {
+                        color: item.unread ? colors.foreground : colors.mutedForeground,
+                        fontFamily: item.unread ? "Inter_500Medium" : "Inter_400Regular",
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {item.lastMessage ?? "Tap to open conversation"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
-          onRefresh={onRefresh}
+          onRefresh={() => { setRefreshing(true); loadChats(); }}
           refreshing={refreshing}
         />
       )}
@@ -238,29 +284,74 @@ export default function ChatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  screen: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  title: { fontSize: 28, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
-  newBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  screenTitle: {
+    fontSize: 30,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.6,
+  },
+  newChatBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#1E90FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  loadingText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  errorText: { fontSize: 15, fontFamily: "Inter_500Medium", textAlign: "center", paddingHorizontal: 32 },
-  retryBtn: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10 },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 40,
+  },
+  stateIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  stateTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold", textAlign: "center" },
+  stateText: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 4,
+  },
   retryText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 15 },
-  emptyTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
-  emptyDesc: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", paddingHorizontal: 40 },
-  sep: { height: StyleSheet.hairlineWidth, marginLeft: 80 },
+  chatRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  chatInfo: { flex: 1, gap: 4 },
+  chatTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  chatName: { fontSize: 16, fontFamily: "Inter_600SemiBold", flex: 1, marginRight: 8 },
+  chatTime: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  chatPreview: { fontSize: 14, lineHeight: 18 },
 });
