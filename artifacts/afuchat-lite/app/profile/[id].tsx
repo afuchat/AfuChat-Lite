@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -139,7 +140,7 @@ export default function UserProfileScreen() {
                   {getDisplayName(profile)}
                 </Text>
                 {profile.is_verified && (
-                  <Feather name="check-circle" size={18} color={colors.primary} />
+                  <AfuChatLogo size={22} />
                 )}
               </View>
               <Text style={[styles.handle, { color: colors.primary }]}>@{profile.handle}</Text>

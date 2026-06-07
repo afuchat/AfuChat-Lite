@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -60,6 +61,7 @@ export default function LoginScreen() {
         >
           {/* Brand */}
           <View style={styles.logoWrap}>
+            <AfuChatLogo size={72} />
             <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
             <Text style={[styles.tagline, { color: colors.mutedForeground }]}>Fast. Simple. Yours.</Text>
           </View>

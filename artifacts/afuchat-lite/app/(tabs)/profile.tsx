@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
@@ -319,9 +320,7 @@ export default function ProfileScreen() {
               <View style={styles.nameRow}>
                 <Text style={styles.profileName}>{name}</Text>
                 {profile?.is_verified && (
-                  <View style={styles.verifiedBadge}>
-                    <Ionicons name="checkmark" size={11} color="#1E90FF" />
-                  </View>
+                  <AfuChatLogo size={22} />
                 )}
               </View>
               <Text style={styles.profileHandle}>@{profile?.handle}</Text>
@@ -493,14 +492,6 @@ const styles = StyleSheet.create({
   nameBlock: { alignItems: "center", gap: 4 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   profileName: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: -0.3 },
-  verifiedBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   profileHandle: { fontSize: 14, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
   profileBio: {
     fontSize: 13,

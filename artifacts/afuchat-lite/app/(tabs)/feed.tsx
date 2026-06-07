@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
@@ -51,9 +52,12 @@ function PostCard({ post, colors, currentUserId, onLike, onDelete }: {
         >
           <Avatar uri={post.author?.avatar_url} name={authorName} size={38} />
           <View style={postStyles.authorInfo}>
-            <Text style={[postStyles.authorName, { color: colors.foreground }]} numberOfLines={1}>
-              {authorName}
-            </Text>
+            <View style={postStyles.nameRow}>
+              <Text style={[postStyles.authorName, { color: colors.foreground }]} numberOfLines={1}>
+                {authorName}
+              </Text>
+              {post.author?.is_verified && <AfuChatLogo size={15} />}
+            </View>
             <Text style={[postStyles.postTime, { color: colors.mutedForeground }]}>
               {timeAgo(post.created_at)}
             </Text>
@@ -116,6 +120,7 @@ const postStyles = StyleSheet.create({
     paddingBottom: 10,
   },
   authorRow: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   authorInfo: { flex: 1 },
   authorName: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   postTime: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },

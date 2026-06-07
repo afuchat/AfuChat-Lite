@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import * as Contacts from "expo-contacts";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
@@ -267,7 +268,7 @@ export default function NewChatScreen() {
         <View style={styles.rowInfo}>
           <View style={styles.nameRow}>
             <Text style={[styles.rowName, { color: colors.foreground }]} numberOfLines={1}>{name}</Text>
-            {item.is_verified && <Feather name="check-circle" size={13} color={colors.primary} />}
+            {item.is_verified && <AfuChatLogo size={15} />}
           </View>
           <Text style={[styles.rowSub, { color: colors.primary }]}>@{item.handle}</Text>
           {extra ? <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{extra}</Text> : null}
