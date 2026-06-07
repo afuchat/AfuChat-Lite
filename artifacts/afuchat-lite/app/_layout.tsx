@@ -37,10 +37,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inTabs = segments[0] === "(tabs)";
     const inChat = segments[0] === "chat";
     const inProfile = segments[0] === "profile";
+    const inNewChat = segments[0] === "new-chat";
 
     if (!session && !inAuth) {
       router.replace("/(auth)/login");
-    } else if (session && !inTabs && !inChat && !inProfile) {
+    } else if (session && !inTabs && !inChat && !inProfile && !inNewChat) {
       router.replace("/(tabs)/chats");
     }
   }, [session, authLoading, segments]);
@@ -83,6 +84,14 @@ export default function RootLayout() {
                         <Stack.Screen
                           name="profile/edit"
                           options={{ headerShown: false, animation: "slide_from_right" }}
+                        />
+                        <Stack.Screen
+                          name="profile/[id]"
+                          options={{ headerShown: false, animation: "slide_from_right" }}
+                        />
+                        <Stack.Screen
+                          name="new-chat"
+                          options={{ headerShown: false, animation: "slide_from_bottom" }}
                         />
                       </Stack>
                     </AuthGate>

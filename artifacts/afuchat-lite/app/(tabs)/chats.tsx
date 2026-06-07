@@ -17,14 +17,21 @@ import { Avatar } from "@/components/Avatar";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
-import { Chat, Profile, getDisplayName, isOnline as profileOnline, supabase } from "@/lib/supabase";
+import {
+  Chat,
+  Profile,
+  getDisplayName,
+  isOnline as profileOnline,
+  supabase,
+} from "@/lib/supabase";
 
 type ChatRow = {
   chat: Chat;
   otherUser: Profile | null;
   lastMessage: string | null;
   lastMessageAt: string | null;
-  unread: boolean;
+  unreadCount: number;
+  typingName: string | null;
 };
 
 function formatTime(iso: string | null | undefined): string {
@@ -52,6 +59,7 @@ export default function ChatsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [typingMap, setTypingMap] = useState<Map<string, string>>(new Map());
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -62,7 +70,6 @@ export default function ChatsScreen() {
   const loadChats = useCallback(async () => {
     if (!user) return;
     try {
-      // Step 1: get this user's chat IDs
       const { data: memberships, error: memErr } = await supabase
         .from("chat_members")
         .select("chat_id")
@@ -76,8 +83,7 @@ export default function ChatsScreen() {
 
       const chatIds = memberships.map((m) => m.chat_id);
 
-      // Step 2: batch fetch chats + all members + recent messages in parallel (3 queries total)
-      const [chatsResult, membersResult, messagesResult] = await Promise.all([
+      const [chatsResult, membersResult, messagesResult, unreadResult] = await Promise.all([
         supabase
           .from("chats")
           .select("*")
@@ -95,6 +101,12 @@ export default function ChatsScreen() {
           .in("chat_id", chatIds)
           .order("sent_at", { ascending: false })
           .limit(Math.max(chatIds.length * 3, 30)),
+        supabase
+          .from("messages")
+          .select("chat_id")
+          .in("chat_id", chatIds)
+          .neq("sender_id", user.id)
+          .is("read_at", null),
       ]);
 
       if (chatsResult.error) throw chatsResult.error;
@@ -102,10 +114,9 @@ export default function ChatsScreen() {
       const chats = chatsResult.data ?? [];
       const allMembers = membersResult.data ?? [];
       const allMessages = messagesResult.data ?? [];
+      const unreadRows = unreadResult.data ?? [];
 
-      // Step 3: collect unique other-user IDs, batch fetch profiles
       const otherUserIds = [...new Set(allMembers.map((m) => m.user_id))];
-
       const { data: profiles } = otherUserIds.length
         ? await supabase
             .from("profiles")
@@ -113,20 +124,20 @@ export default function ChatsScreen() {
             .in("id", otherUserIds)
         : { data: [] as Profile[] };
 
-      // Build lookup maps on client — O(n), no extra queries
       const profileMap = new Map((profiles ?? []).map((p: Profile) => [p.id, p]));
-
-      const memberMap = new Map<string, string>(); // chatId → first other userId
+      const memberMap = new Map<string, string>();
       for (const m of allMembers) {
         if (!memberMap.has(m.chat_id)) memberMap.set(m.chat_id, m.user_id);
       }
-
-      const lastMsgMap = new Map<string, (typeof allMessages)[0]>(); // chatId → latest msg
+      const lastMsgMap = new Map<string, (typeof allMessages)[0]>();
       for (const msg of allMessages) {
         if (!lastMsgMap.has(msg.chat_id)) lastMsgMap.set(msg.chat_id, msg);
       }
+      const unreadMap = new Map<string, number>();
+      for (const r of unreadRows) {
+        unreadMap.set(r.chat_id, (unreadMap.get(r.chat_id) ?? 0) + 1);
+      }
 
-      // Step 4: assemble rows — pure client-side, zero extra queries
       const enriched: ChatRow[] = chats.map((chat: Chat) => {
         const otherId = memberMap.get(chat.id);
         const otherUser = otherId ? (profileMap.get(otherId) ?? null) : null;
@@ -136,7 +147,8 @@ export default function ChatsScreen() {
           otherUser,
           lastMessage: last?.encrypted_content ?? null,
           lastMessageAt: last?.sent_at ?? chat.updated_at,
-          unread: last ? last.sender_id !== user.id : false,
+          unreadCount: unreadMap.get(chat.id) ?? 0,
+          typingName: typingMap.get(chat.id) ?? null,
         };
       });
 
@@ -152,43 +164,76 @@ export default function ChatsScreen() {
     } finally {
       if (mounted.current) { setLoading(false); setRefreshing(false); }
     }
-  }, [user]);
+  }, [user, typingMap]);
 
+  // Real-time: messages + typing
   useEffect(() => {
     loadChats();
+
     const ch = supabase
       .channel("chats-list-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, loadChats)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, loadChats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "typing_indicators" },
+        async (payload) => {
+          if (!mounted.current || !user) return;
+          const row = payload.new as { chat_id: string; user_id: string; is_typing: boolean };
+          if (row.user_id === user.id) return;
+          if (row.is_typing) {
+            const { data: p } = await supabase
+              .from("profiles")
+              .select("display_name, handle")
+              .eq("id", row.user_id)
+              .single();
+            if (mounted.current && p) {
+              const name = (p as Profile).display_name || `@${(p as Profile).handle}`;
+              setTypingMap((prev) => new Map(prev).set(row.chat_id, name));
+              setTimeout(() => {
+                if (mounted.current)
+                  setTypingMap((prev) => {
+                    const next = new Map(prev);
+                    next.delete(row.chat_id);
+                    return next;
+                  });
+              }, 5000);
+            }
+          } else {
+            if (mounted.current)
+              setTypingMap((prev) => {
+                const next = new Map(prev);
+                next.delete(row.chat_id);
+                return next;
+              });
+          }
+        }
+      )
       .subscribe();
+
     return () => { supabase.removeChannel(ch); };
   }, [loadChats]);
+
+  // Merge typing state into rows reactively
+  const displayRows = rows.map((r) => ({
+    ...r,
+    typingName: typingMap.get(r.chat.id) ?? null,
+  }));
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <OfflineBanner />
 
+      {/* Header */}
       <View
         style={[
           styles.header,
           {
-            paddingTop: insets.top + 12,
+            paddingTop: insets.top + 8,
             backgroundColor: colors.background,
             borderBottomColor: colors.border,
           },
         ]}
       >
-        <Text style={[styles.screenTitle, { color: colors.foreground }]}>Chats</Text>
-        <TouchableOpacity
-          style={[styles.newChatBtn, { backgroundColor: colors.primary }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push("/(tabs)/contacts");
-          }}
-          activeOpacity={0.85}
-        >
-          <Feather name="edit-2" size={16} color="#fff" />
-        </TouchableOpacity>
+        <Text style={[styles.appTitle, { color: colors.foreground }]}>AfuChat Lite</Text>
       </View>
 
       {loading ? (
@@ -200,38 +245,25 @@ export default function ChatsScreen() {
           <View style={[styles.stateIcon, { backgroundColor: colors.muted }]}>
             <Feather name="alert-circle" size={28} color={colors.destructive} />
           </View>
-          <Text style={[styles.stateTitle, { color: colors.foreground }]}>
-            Something went wrong
-          </Text>
-          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
-            {error}
-          </Text>
+          <Text style={[styles.stateTitle, { color: colors.foreground }]}>Something went wrong</Text>
+          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>{error}</Text>
           <Pressable style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={loadChats}>
             <Text style={styles.retryText}>Try Again</Text>
           </Pressable>
         </View>
-      ) : rows.length === 0 ? (
+      ) : displayRows.length === 0 ? (
         <View style={styles.centered}>
           <View style={[styles.stateIcon, { backgroundColor: colors.secondary }]}>
             <Feather name="message-circle" size={32} color={colors.primary} />
           </View>
-          <Text style={[styles.stateTitle, { color: colors.foreground }]}>
-            No conversations yet
-          </Text>
+          <Text style={[styles.stateTitle, { color: colors.foreground }]}>No conversations yet</Text>
           <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
-            Head to People to start your first chat
+            Tap + to start your first chat
           </Text>
-          <Pressable
-            style={[styles.retryBtn, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/(tabs)/contacts")}
-          >
-            <Feather name="users" size={16} color="#fff" />
-            <Text style={styles.retryText}>Browse People</Text>
-          </Pressable>
         </View>
       ) : (
         <FlatList
-          data={rows}
+          data={displayRows}
           keyExtractor={(item) => item.chat.id}
           renderItem={({ item }) => {
             const title = item.chat.is_group
@@ -251,6 +283,7 @@ export default function ChatsScreen() {
                       name: title,
                       isGroup: item.chat.is_group ? "1" : "0",
                       avatarUrl: item.otherUser?.avatar_url ?? "",
+                      otherId: item.otherUser?.id ?? "",
                     },
                   });
                 }}
@@ -259,28 +292,41 @@ export default function ChatsScreen() {
                 <Avatar uri={item.otherUser?.avatar_url} name={title} size={52} isOnline={online} />
                 <View style={styles.chatInfo}>
                   <View style={styles.chatTopRow}>
-                    <Text
-                      style={[styles.chatName, { color: colors.foreground }]}
-                      numberOfLines={1}
-                    >
+                    <Text style={[styles.chatName, { color: colors.foreground }]} numberOfLines={1}>
                       {title}
                     </Text>
                     <Text style={[styles.chatTime, { color: colors.mutedForeground }]}>
                       {formatTime(item.lastMessageAt)}
                     </Text>
                   </View>
-                  <Text
-                    style={[
-                      styles.chatPreview,
-                      {
-                        color: item.unread ? colors.foreground : colors.mutedForeground,
-                        fontFamily: item.unread ? "Inter_500Medium" : "Inter_400Regular",
-                      },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {item.lastMessage ?? "Tap to open conversation"}
-                  </Text>
+                  <View style={styles.chatBottomRow}>
+                    {item.typingName ? (
+                      <Text style={[styles.chatPreview, { color: colors.primary, flex: 1 }]} numberOfLines={1}>
+                        {item.typingName} is typing…
+                      </Text>
+                    ) : (
+                      <Text
+                        style={[
+                          styles.chatPreview,
+                          {
+                            color: item.unreadCount > 0 ? colors.foreground : colors.mutedForeground,
+                            fontFamily: item.unreadCount > 0 ? "Inter_600SemiBold" : "Inter_400Regular",
+                            flex: 1,
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.lastMessage ?? "Tap to open conversation"}
+                      </Text>
+                    )}
+                    {item.unreadCount > 0 && (
+                      <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
+                        <Text style={styles.unreadText}>
+                          {item.unreadCount > 99 ? "99+" : item.unreadCount}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
               </TouchableOpacity>
             );
@@ -291,6 +337,17 @@ export default function ChatsScreen() {
           refreshing={refreshing}
         />
       )}
+
+      {/* FAB — new chat */}
+      <Pressable
+        style={[styles.fab, { backgroundColor: colors.primary, bottom: insets.bottom + 86 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          router.push("/new-chat");
+        }}
+      >
+        <Feather name="edit-2" size={20} color="#fff" />
+      </Pressable>
     </View>
   );
 }
@@ -298,29 +355,16 @@ export default function ChatsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  screenTitle: {
-    fontSize: 30,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.6,
-  },
-  newChatBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#1E90FF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  appTitle: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.4,
   },
   centered: {
     flex: 1,
@@ -363,7 +407,35 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  chatBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   chatName: { fontSize: 16, fontFamily: "Inter_600SemiBold", flex: 1, marginRight: 8 },
   chatTime: { fontSize: 12, fontFamily: "Inter_400Regular" },
   chatPreview: { fontSize: 14, lineHeight: 18 },
+  unreadBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 5,
+  },
+  unreadText: { color: "#fff", fontSize: 11, fontFamily: "Inter_700Bold" },
+  fab: {
+    position: "absolute",
+    right: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 8,
+    shadowColor: "#1E90FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+  },
 });

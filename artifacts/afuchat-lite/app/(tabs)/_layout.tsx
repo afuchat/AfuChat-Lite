@@ -7,35 +7,28 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOffline } from "@/context/OfflineContext";
 import { useColors } from "@/hooks/useColors";
 
-export const FLOATING_NAV_BOTTOM_PADDING = 80;
-
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 
-function NavIcon({
-  name,
-  color,
-  size = 22,
-}: {
-  name: IoniconsName;
-  color: string;
-  size?: number;
-}) {
+function TabLabel({ label, focused, color }: { label: string; focused: boolean; color: string }) {
+  return (
+    <Text style={[styles.label, { color, fontFamily: focused ? "Inter_700Bold" : "Inter_600SemiBold" }]}>
+      {label}
+    </Text>
+  );
+}
+
+function TabIcon({ name, color, size = 22 }: { name: IoniconsName; color: string; size?: number }) {
   return <Ionicons name={name} size={size} color={color} />;
 }
 
-function ChatsNavIcon({ color, focused }: { color: string; focused: boolean }) {
+function ChatsTabIcon({ color, focused }: { color: string; focused: boolean }) {
   const { pendingCount } = useOffline();
   return (
     <View style={{ position: "relative" }}>
-      <NavIcon
-        name={focused ? "chatbubbles" : "chatbubbles-outline"}
-        color={color}
-      />
+      <TabIcon name={focused ? "chatbubbles" : "chatbubbles-outline"} color={color} />
       {pendingCount > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {pendingCount > 9 ? "9+" : pendingCount}
-          </Text>
+          <Text style={styles.badgeText}>{pendingCount > 9 ? "9+" : pendingCount}</Text>
         </View>
       )}
     </View>
@@ -51,7 +44,6 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
@@ -59,8 +51,8 @@ export default function TabLayout() {
           bottom: navBottom,
           left: 20,
           right: 20,
-          height: 58,
-          borderRadius: 30,
+          height: 64,
+          borderRadius: 32,
           backgroundColor: colors.tabBar,
           borderTopWidth: 0,
           elevation: 20,
@@ -71,39 +63,39 @@ export default function TabLayout() {
           overflow: "hidden",
         },
         tabBarItemStyle: {
-          height: 58,
-          paddingVertical: 0,
+          height: 64,
+          paddingTop: 8,
+          paddingBottom: 6,
         },
+        tabBarLabelStyle: { display: "none" },
       }}
     >
       <Tabs.Screen
         name="chats"
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <ChatsNavIcon color={color} focused={focused} />
-          ),
+          tabBarIcon: ({ color, focused }) => <ChatsTabIcon color={color} focused={focused} />,
+          tabBarLabel: ({ color, focused }) => <TabLabel label="Chats" focused={focused} color={color} />,
+          tabBarLabelStyle: { display: "flex" },
         }}
       />
       <Tabs.Screen
-        name="contacts"
+        name="feed"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <NavIcon
-              name={focused ? "people" : "people-outline"}
-              color={color}
-            />
+            <TabIcon name={focused ? "albums" : "albums-outline"} color={color} />
           ),
+          tabBarLabel: ({ color, focused }) => <TabLabel label="Feed" focused={focused} color={color} />,
+          tabBarLabelStyle: { display: "flex" },
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <NavIcon
-              name={focused ? "person-circle" : "person-circle-outline"}
-              color={color}
-            />
+            <TabIcon name={focused ? "person-circle" : "person-circle-outline"} color={color} />
           ),
+          tabBarLabel: ({ color, focused }) => <TabLabel label="Profile" focused={focused} color={color} />,
+          tabBarLabelStyle: { display: "flex" },
         }}
       />
     </Tabs>
@@ -111,6 +103,7 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  label: { fontSize: 10, marginTop: 2 },
   badge: {
     position: "absolute",
     top: -3,
