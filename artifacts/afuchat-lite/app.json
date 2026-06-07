@@ -2,7 +2,7 @@
   "expo": {
     "name": "AfuChat Lite",
     "slug": "afuchat-lite",
-    "owner": "amkaweesi1",
+    "owner": "afunew",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -46,7 +46,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "952b27ee-4784-4662-a46e-8d68235113ad"
+        "projectId": "8b198c70-5a6d-42eb-b175-71d128fed50e"
       }
     }
   }

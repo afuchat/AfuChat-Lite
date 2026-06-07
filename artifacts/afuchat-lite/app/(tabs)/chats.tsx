@@ -177,7 +177,7 @@ export default function ChatsScreen() {
           lastMessage: last?.encrypted_content ?? null,
           lastMessageAt: last?.sent_at ?? chat.updated_at,
           unreadCount,
-          typingName: typingMap.get(chat.id) ?? null,
+          typingName: null, // merged from typingMap in displayRows below
         };
       });
 
@@ -194,7 +194,7 @@ export default function ChatsScreen() {
     } finally {
       if (mounted.current) { setLoading(false); setRefreshing(false); }
     }
-  }, [user, typingMap]);
+  }, [user]);
 
   // Real-time: messages + typing
   useEffect(() => {
