@@ -80,7 +80,7 @@ export default function UserProfileScreen() {
           if (existing) {
             router.replace({
               pathname: "/chat/[id]",
-              params: { id: existing.id, name: getDisplayName(profile), isGroup: "0", avatarUrl: profile.avatar_url ?? "", otherId: profile.id },
+              params: { id: existing.id, name: getDisplayName(profile), isGroup: "0", avatarUrl: profile.avatar_url ?? "", otherId: profile.id, isVerified: profile.is_verified ? "1" : "0" },
             });
             return;
           }
@@ -102,7 +102,7 @@ export default function UserProfileScreen() {
 
       router.replace({
         pathname: "/chat/[id]",
-        params: { id: newChat.id, name: getDisplayName(profile), isGroup: "0", avatarUrl: profile.avatar_url ?? "", otherId: profile.id },
+        params: { id: newChat.id, name: getDisplayName(profile), isGroup: "0", avatarUrl: profile.avatar_url ?? "", otherId: profile.id, isVerified: profile.is_verified ? "1" : "0" },
       });
     } catch (e: any) {
       console.error("openChat error", e);

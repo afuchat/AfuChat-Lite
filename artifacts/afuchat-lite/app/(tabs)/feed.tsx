@@ -211,7 +211,7 @@ function PostCard({
           }}
         >
           <Feather
-            name={post.liked_by_me ? "heart" : "heart"}
+            name="heart"
             size={16}
             color={post.liked_by_me ? "#EF4444" : colors.mutedForeground}
           />
@@ -221,7 +221,7 @@ function PostCard({
               { color: post.liked_by_me ? "#EF4444" : colors.mutedForeground },
             ]}
           >
-            {likeCount > 0 ? likeCount : ""} {likeCount === 1 ? "Like" : "Like"}
+            {likeCount > 0 ? likeCount : ""} {likeCount === 1 ? "Like" : "Likes"}
           </Text>
         </Pressable>
 
