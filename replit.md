@@ -11,6 +11,14 @@ A lightweight Android-only chat app built on Expo, backed by the AfuChat Supabas
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 
+## Platform
+
+**Android only.** This is not a cross-platform or hybrid app.
+- iOS support has been fully removed and must never be reintroduced.
+- There are no `ios` fields in `app.json`, no `Platform.OS === "ios"` checks, and no iOS-specific code anywhere in the codebase.
+- All `Platform.OS` ternaries have been collapsed to their Android values.
+- All `Platform` imports from `react-native` have been removed.
+
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
@@ -19,7 +27,7 @@ A lightweight Android-only chat app built on Expo, backed by the AfuChat Supabas
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
-- Mobile: Expo SDK 53, expo-router, Supabase JS client
+- Mobile: Expo SDK 55, expo-router, Supabase JS client (Android only)
 
 ## Where things live
 

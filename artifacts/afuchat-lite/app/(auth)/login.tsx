@@ -7,7 +7,6 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -50,7 +49,7 @@ export default function LoginScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior="height"
       >
         <ScrollView
           contentContainerStyle={[

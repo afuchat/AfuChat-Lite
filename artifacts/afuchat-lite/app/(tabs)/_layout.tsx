@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useOffline } from "@/context/OfflineContext";
@@ -45,8 +45,7 @@ function ChatsNavIcon({ color, focused }: { color: string; focused: boolean }) {
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomOffset =
-    12 + (Platform.OS === "android" ? 0 : Math.max(insets.bottom - 4, 0));
+  const bottomOffset = 12;
 
   return (
     <Tabs

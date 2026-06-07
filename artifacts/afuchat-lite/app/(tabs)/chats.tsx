@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -158,7 +157,7 @@ export default function ChatsScreen() {
         style={[
           styles.header,
           {
-            paddingTop: Platform.OS === "android" ? insets.top + 12 : insets.top + 4,
+            paddingTop: insets.top + 12,
             backgroundColor: colors.background,
             borderBottomColor: colors.border,
           },

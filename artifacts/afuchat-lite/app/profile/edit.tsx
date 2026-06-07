@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -220,14 +219,14 @@ export default function EditProfileScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.screen, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={undefined}
     >
       {/* Header */}
       <View
         style={[
           styles.header,
           {
-            paddingTop: Platform.OS === "android" ? insets.top + 12 : insets.top + 4,
+            paddingTop: insets.top + 12,
             backgroundColor: colors.background,
             borderBottomColor: colors.border,
           },

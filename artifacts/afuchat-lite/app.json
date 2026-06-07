@@ -13,10 +13,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#1E90FF"
     },
-    "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.afuchat.lite"
-    },
     "android": {
       "package": "com.afuchat.lite",
       "adaptiveIcon": {

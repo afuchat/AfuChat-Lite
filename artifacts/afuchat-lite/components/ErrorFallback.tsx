@@ -3,7 +3,6 @@ import { reloadAppAsync } from "expo";
 import React, { useState } from "react";
 import {
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -42,11 +41,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
     return details;
   };
 
-  const monoFont = Platform.select({
-    ios: "Menlo",
-    android: "monospace",
-    default: "monospace",
-  });
+  const monoFont = "monospace";
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

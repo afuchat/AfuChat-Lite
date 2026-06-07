@@ -7,7 +7,6 @@ import {
   Alert,
   Animated,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -113,7 +112,7 @@ export default function RegisterScreen() {
     <View style={[styles.gradient, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior="height"
       >
         <ScrollView
           contentContainerStyle={[

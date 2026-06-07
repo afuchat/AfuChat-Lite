@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -336,7 +335,7 @@ export default function ChatScreen() {
               uri={avatarUrl || undefined}
               name={name ?? "?"}
               size={34}
-              style={{ marginRight: Platform.OS === "ios" ? 0 : 12 }}
+              style={{ marginRight: 12 }}
             />
           ),
         }}
