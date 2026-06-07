@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
@@ -230,7 +231,10 @@ export default function ChatsScreen() {
           },
         ]}
       >
-        <Text style={[styles.appTitle, { color: colors.foreground }]}>AfuChat Lite</Text>
+        <View style={styles.headerBrand}>
+          <AfuChatLogo size={30} />
+          <Text style={[styles.appTitle, { color: colors.foreground }]}>AfuChat Lite</Text>
+        </View>
       </View>
 
       {loading ? (
@@ -357,6 +361,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerBrand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   appTitle: {
     fontSize: 22,
