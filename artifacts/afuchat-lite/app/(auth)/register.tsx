@@ -31,10 +31,8 @@ export default function RegisterScreen() {
   const [step, setStep] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  // Step 1
   const [displayName, setDisplayName] = useState("");
   const [handle, setHandle] = useState("");
-  // Step 2
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -72,11 +70,8 @@ export default function RegisterScreen() {
   };
 
   const goBack = () => {
-    if (step === 0) {
-      router.back();
-    } else {
-      animateToStep(0);
-    }
+    if (step === 0) router.back();
+    else animateToStep(0);
   };
 
   const handleRegister = async () => {
@@ -100,7 +95,7 @@ export default function RegisterScreen() {
       Alert.alert("Registration failed", error);
     } else {
       Alert.alert(
-        "Account created! 🎉",
+        "Account created!",
         "Welcome to AfuChat Lite! Check your email to confirm your account.",
         [{ text: "Sign In", onPress: () => router.replace("/(auth)/login") }]
       );
@@ -110,28 +105,25 @@ export default function RegisterScreen() {
   const progress = (step + 1) / STEPS.length;
 
   return (
-    <View style={[styles.gradient, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior="height"
-      >
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="height">
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 },
+            { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {/* Brand */}
           <View style={styles.logoWrap}>
-            <AfuChatLogo size={56} />
+            <AfuChatLogo size={52} />
             <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
           </View>
 
-          {/* Header */}
+          {/* Header row */}
           <View style={styles.header}>
-            <Pressable onPress={goBack} style={styles.backBtn} hitSlop={8}>
+            <Pressable onPress={goBack} hitSlop={12}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </Pressable>
             <View style={styles.stepInfo}>
@@ -143,34 +135,20 @@ export default function RegisterScreen() {
           </View>
 
           {/* Progress bar */}
-          <View style={styles.progressTrack}>
+          <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
             <Animated.View
-              style={[
-                styles.progressFill,
-                { width: `${progress * 100}%` },
-              ]}
+              style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: colors.primary }]}
             />
           </View>
 
-          {/* Card */}
+          {/* Step content — flat, no card */}
           <Animated.View
-            style={[
-              styles.card,
-              {
-                opacity: slideAnim.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [1, 0, 1],
-                }),
-                transform: [
-                  {
-                    translateX: slideAnim.interpolate({
-                      inputRange: [0, 0.5, 1],
-                      outputRange: [0, -30, 0],
-                    }),
-                  },
-                ],
-              },
-            ]}
+            style={{
+              opacity: slideAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] }),
+              transform: [{
+                translateX: slideAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -20, 0] }),
+              }],
+            }}
           >
             {step === 0 ? (
               <Step1
@@ -180,6 +158,7 @@ export default function RegisterScreen() {
                 setHandle={setHandle}
                 handleRef={handleRef}
                 onNext={goNext}
+                colors={colors}
               />
             ) : (
               <Step2
@@ -198,15 +177,16 @@ export default function RegisterScreen() {
                 confirmRef={confirmRef}
                 loading={loading}
                 onSubmit={handleRegister}
+                colors={colors}
               />
             )}
           </Animated.View>
 
-          {/* Sign in link */}
+          {/* Footer link */}
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.mutedForeground }]}>Already have an account? </Text>
             <Pressable onPress={() => router.replace("/(auth)/login")}>
-              <Text style={styles.footerLink}>Sign In</Text>
+              <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -215,25 +195,20 @@ export default function RegisterScreen() {
   );
 }
 
-// ─── Step 1 ──────────────────────────────────────────────────────────────────
+// ─── Step 1 ───────────────────────────────────────────────────────────────────
 
-function Step1({
-  displayName, handle, setDisplayName, setHandle, handleRef, onNext,
-}: {
-  displayName: string;
-  handle: string;
-  setDisplayName: (v: string) => void;
-  setHandle: (v: string) => void;
+function Step1({ displayName, handle, setDisplayName, setHandle, handleRef, onNext, colors }: {
+  displayName: string; handle: string;
+  setDisplayName: (v: string) => void; setHandle: (v: string) => void;
   handleRef: React.RefObject<TextInput | null>;
-  onNext: () => void;
+  onNext: () => void; colors: any;
 }) {
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.cardTitle}>Your Identity</Text>
-      <Text style={styles.cardSubtitle}>
+      <Text style={[styles.title, { color: colors.foreground }]}>Your Identity</Text>
+      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
         Choose how people will see you on AfuChat Lite.
       </Text>
-
       <View style={styles.form}>
         <InputField
           icon="user"
@@ -243,6 +218,7 @@ function Step1({
           autoCapitalize="words"
           returnKeyType="next"
           onSubmitEditing={() => handleRef.current?.focus()}
+          colors={colors}
         />
         <View>
           <InputField
@@ -250,21 +226,19 @@ function Step1({
             icon="at-sign"
             placeholder="Username (e.g. alex_smith)"
             value={handle}
-            onChangeText={(t: string) =>
-              setHandle(t.toLowerCase().replace(/[^a-z0-9_]/g, ""))
-            }
+            onChangeText={(t: string) => setHandle(t.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={onNext}
+            colors={colors}
           />
-          <Text style={styles.hint}>
+          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
             Only letters, numbers, and underscores. Min 3 characters.
           </Text>
         </View>
-
         <Pressable
-          style={({ pressed }) => [styles.primaryBtn, { opacity: pressed ? 0.88 : 1 }]}
+          style={({ pressed }) => [styles.primaryBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
           onPress={onNext}
         >
           <Text style={styles.primaryBtnText}>Continue</Text>
@@ -275,12 +249,12 @@ function Step1({
   );
 }
 
-// ─── Step 2 ──────────────────────────────────────────────────────────────────
+// ─── Step 2 ───────────────────────────────────────────────────────────────────
 
 function Step2({
   email, password, confirmPassword, showPass, showConfirm,
   setEmail, setPassword, setConfirmPassword, setShowPass, setShowConfirm,
-  emailRef, passwordRef, confirmRef, loading, onSubmit,
+  emailRef, passwordRef, confirmRef, loading, onSubmit, colors,
 }: {
   email: string; password: string; confirmPassword: string;
   showPass: boolean; showConfirm: boolean;
@@ -290,55 +264,29 @@ function Step2({
   emailRef: React.RefObject<TextInput | null>;
   passwordRef: React.RefObject<TextInput | null>;
   confirmRef: React.RefObject<TextInput | null>;
-  loading: boolean; onSubmit: () => void;
+  loading: boolean; onSubmit: () => void; colors: any;
 }) {
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.cardTitle}>Your Account</Text>
-      <Text style={styles.cardSubtitle}>
+      <Text style={[styles.title, { color: colors.foreground }]}>Your Account</Text>
+      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
         Set up your email and a secure password.
       </Text>
-
       <View style={styles.form}>
-        <InputField
-          ref={emailRef}
-          icon="mail"
-          placeholder="Email address"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="next"
-          onSubmitEditing={() => passwordRef.current?.focus()}
-        />
-        <InputField
-          ref={passwordRef}
-          icon="lock"
-          placeholder="Password (min 6 chars)"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPass}
-          returnKeyType="next"
+        <InputField ref={emailRef} icon="mail" placeholder="Email address" value={email}
+          onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none"
+          autoCorrect={false} returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()} colors={colors} />
+        <InputField ref={passwordRef} icon="lock" placeholder="Password (min 6 chars)" value={password}
+          onChangeText={setPassword} secureTextEntry={!showPass} returnKeyType="next"
           onSubmitEditing={() => confirmRef.current?.focus()}
-          rightIcon={showPass ? "eye-off" : "eye"}
-          onRightIconPress={() => setShowPass(!showPass)}
-        />
-        <InputField
-          ref={confirmRef}
-          icon="shield"
-          placeholder="Confirm password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry={!showConfirm}
-          returnKeyType="done"
+          rightIcon={showPass ? "eye-off" : "eye"} onRightIconPress={() => setShowPass(!showPass)} colors={colors} />
+        <InputField ref={confirmRef} icon="shield" placeholder="Confirm password" value={confirmPassword}
+          onChangeText={setConfirmPassword} secureTextEntry={!showConfirm} returnKeyType="done"
           onSubmitEditing={onSubmit}
-          rightIcon={showConfirm ? "eye-off" : "eye"}
-          onRightIconPress={() => setShowConfirm(!showConfirm)}
-        />
-
+          rightIcon={showConfirm ? "eye-off" : "eye"} onRightIconPress={() => setShowConfirm(!showConfirm)} colors={colors} />
         <Pressable
-          style={({ pressed }) => [styles.primaryBtn, { opacity: pressed || loading ? 0.88 : 1 }]}
+          style={({ pressed }) => [styles.primaryBtn, { backgroundColor: colors.primary, opacity: pressed || loading ? 0.88 : 1 }]}
           onPress={onSubmit}
           disabled={loading}
         >
@@ -362,26 +310,33 @@ type InputFieldProps = {
   icon: keyof typeof Feather.glyphMap;
   rightIcon?: keyof typeof Feather.glyphMap;
   onRightIconPress?: () => void;
+  colors: any;
   [key: string]: any;
 };
 
 const InputField = React.forwardRef<TextInput, InputFieldProps>(
-  ({ icon, rightIcon, onRightIconPress, ...props }, ref) => {
+  ({ icon, rightIcon, onRightIconPress, colors, ...props }, ref) => {
     const [focused, setFocused] = useState(false);
     return (
-      <View style={[styles.inputRow, focused && styles.inputRowFocused]}>
-        <Feather name={icon} size={18} color={focused ? "#1E90FF" : "#5C7A99"} />
+      <View style={[
+        styles.inputRow,
+        {
+          backgroundColor: colors.muted,
+          borderColor: focused ? colors.primary : colors.border,
+        },
+      ]}>
+        <Feather name={icon} size={18} color={focused ? colors.primary : colors.mutedForeground} />
         <TextInput
           ref={ref}
-          style={styles.input}
-          placeholderTextColor="#5C7A99"
+          style={[styles.input, { color: colors.foreground }]}
+          placeholderTextColor={colors.mutedForeground}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           {...props}
         />
         {rightIcon && (
           <Pressable onPress={onRightIconPress} hitSlop={10}>
-            <Feather name={rightIcon} size={18} color="#5C7A99" />
+            <Feather name={rightIcon} size={18} color={colors.mutedForeground} />
           </Pressable>
         )}
       </View>
@@ -390,118 +345,49 @@ const InputField = React.forwardRef<TextInput, InputFieldProps>(
 );
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 20 },
+  screen: { flex: 1 },
+  scroll: { flexGrow: 1, paddingHorizontal: 28, gap: 24 },
 
-  logoWrap: { alignItems: "center", gap: 6, paddingBottom: 4 },
-  appName: { fontSize: 24, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
+  logoWrap: { alignItems: "center", gap: 6 },
+  appName: { fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
 
-  header: { flexDirection: "row", alignItems: "center", gap: 14 },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  header: { flexDirection: "row", alignItems: "center", gap: 16 },
   stepInfo: { gap: 2 },
-  stepLabel: { fontSize: 12, fontFamily: "Inter_500Medium", color: "#5C7A99" },
-  stepName: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#EDF2FB" },
+  stepLabel: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  stepName: { fontSize: 18, fontFamily: "Inter_700Bold" },
 
-  progressTrack: {
-    height: 4,
-    backgroundColor: "#172035",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: 4,
-    backgroundColor: "#1E90FF",
-    borderRadius: 2,
-  },
+  progressTrack: { height: 3, borderRadius: 2, overflow: "hidden" },
+  progressFill: { height: 3, borderRadius: 2 },
 
-  card: {
-    backgroundColor: "#0D1526",
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: "#172035",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.4,
-    shadowRadius: 32,
-    elevation: 12,
-  },
   stepContent: { gap: 6 },
-  cardTitle: {
-    fontSize: 24,
-    fontFamily: "Inter_700Bold",
-    color: "#EDF2FB",
-    letterSpacing: -0.4,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: "#5C7A99",
-    marginBottom: 8,
-    lineHeight: 20,
-  },
+  title: { fontSize: 24, fontFamily: "Inter_700Bold", letterSpacing: -0.4 },
+  subtitle: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 4 },
 
   form: { gap: 12, marginTop: 4 },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#111C30",
     borderWidth: 1.5,
-    borderColor: "#172035",
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 13,
     gap: 10,
   },
-  inputRowFocused: { borderColor: "#1E90FF", backgroundColor: "#0E2040" },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    color: "#EDF2FB",
-  },
-  hint: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "#5C7A99",
-    marginTop: 4,
-    marginLeft: 4,
-  },
+  input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
+  hint: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 4, marginLeft: 2 },
 
   primaryBtn: {
-    backgroundColor: "#1E90FF",
-    borderRadius: 14,
+    borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
     marginTop: 4,
-    shadowColor: "#1E90FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
-    elevation: 8,
   },
-  primaryBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-  },
+  primaryBtnText: { color: "#fff", fontSize: 16, fontFamily: "Inter_600SemiBold" },
 
-  footerRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  footerText: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#5C7A99" },
-  footerLink: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#1E90FF" },
+  footerRow: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
+  footerText: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  footerLink: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
 });
