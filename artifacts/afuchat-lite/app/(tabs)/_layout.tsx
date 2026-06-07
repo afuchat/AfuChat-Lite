@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
@@ -7,27 +7,30 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOffline } from "@/context/OfflineContext";
 import { useColors } from "@/hooks/useColors";
 
-function TabIcon({
+export const FLOATING_NAV_BOTTOM_PADDING = 80;
+
+type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
+
+function NavIcon({
   name,
   color,
-  focused,
+  size = 22,
 }: {
-  name: keyof typeof Feather.glyphMap;
+  name: IoniconsName;
   color: string;
-  focused: boolean;
+  size?: number;
 }) {
-  return (
-    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Feather name={name} size={22} color={color} />
-    </View>
-  );
+  return <Ionicons name={name} size={size} color={color} />;
 }
 
-function ChatsTabIcon({ color, focused }: { color: string; focused: boolean }) {
+function ChatsNavIcon({ color, focused }: { color: string; focused: boolean }) {
   const { pendingCount } = useOffline();
   return (
     <View style={{ position: "relative" }}>
-      <TabIcon name="message-circle" color={color} focused={focused} />
+      <NavIcon
+        name={focused ? "chatbubbles" : "chatbubbles-outline"}
+        color={color}
+      />
       {pendingCount > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
@@ -42,58 +45,64 @@ function ChatsTabIcon({ color, focused }: { color: string; focused: boolean }) {
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const TAB_HEIGHT = 58 + (Platform.OS === "android" ? 8 : insets.bottom);
+  const bottomOffset =
+    12 + (Platform.OS === "android" ? 0 : Math.max(insets.bottom - 4, 0));
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
-          height: TAB_HEIGHT,
+          position: "absolute",
+          bottom: bottomOffset,
+          left: 44,
+          right: 44,
+          height: 54,
+          borderRadius: 27,
           backgroundColor: colors.tabBar,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.tabBarBorder,
-          elevation: 0,
-          shadowOpacity: 0,
-          paddingTop: 6,
-          paddingBottom: Platform.OS === "android" ? 10 : insets.bottom > 0 ? insets.bottom : 10,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontFamily: "Inter_500Medium",
-          marginTop: 2,
+          borderTopWidth: 0,
+          elevation: 16,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.14,
+          shadowRadius: 20,
         },
         tabBarItemStyle: {
-          paddingVertical: 4,
+          height: 54,
+          paddingVertical: 0,
         },
       }}
     >
       <Tabs.Screen
         name="chats"
         options={{
-          tabBarLabel: "Chats",
           tabBarIcon: ({ color, focused }) => (
-            <ChatsTabIcon color={color} focused={focused} />
+            <ChatsNavIcon color={color} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
         name="contacts"
         options={{
-          tabBarLabel: "People",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="users" color={color} focused={focused} />
+            <NavIcon
+              name={focused ? "people" : "people-outline"}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarLabel: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="user" color={color} focused={focused} />
+            <NavIcon
+              name={focused ? "person-circle" : "person-circle-outline"}
+              color={color}
+            />
           ),
         }}
       />
@@ -102,29 +111,19 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconWrapActive: {
-    backgroundColor: "#E8F3FF",
-  },
   badge: {
     position: "absolute",
-    top: -2,
-    right: -2,
+    top: -3,
+    right: -5,
     backgroundColor: "#EF4444",
     borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    minWidth: 15,
+    height: 15,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 3,
     borderWidth: 1.5,
     borderColor: "#fff",
   },
-  badgeText: { color: "#fff", fontSize: 9, fontFamily: "Inter_700Bold" },
+  badgeText: { color: "#fff", fontSize: 8, fontWeight: "700" },
 });

@@ -18,6 +18,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { OfflineProvider } from "@/context/OfflineContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { ONBOARDING_DONE_KEY } from "@/app/onboarding";
 
 SplashScreen.preventAutoHideAsync();
@@ -74,6 +75,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <ThemeProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
@@ -101,6 +103,7 @@ export default function RootLayout() {
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

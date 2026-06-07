@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -19,11 +18,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
+import { useColors } from "@/hooks/useColors";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signIn } = useAuth();
+  const colors = useColors();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +47,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={["#06090F", "#0A1A36", "#06090F"]} style={styles.gradient}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -66,23 +67,28 @@ export default function LoginScreen() {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.appName}>AfuChat Lite</Text>
-            <Text style={styles.tagline}>Fast. Simple. Yours.</Text>
+            <Text style={[styles.appName, { color: colors.foreground }]}>AfuChat Lite</Text>
+            <Text style={[styles.tagline, { color: colors.mutedForeground }]}>Fast. Simple. Yours.</Text>
           </View>
 
           {/* Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Welcome back</Text>
-            <Text style={styles.cardSubtitle}>Sign in to your account</Text>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>Welcome back</Text>
+            <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Sign in to your account</Text>
 
             <View style={styles.form}>
               {/* Email */}
-              <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
-                <Feather name="mail" size={18} color={emailFocused ? "#1E90FF" : "#5C7A99"} />
+              <View
+                style={[
+                  styles.inputRow,
+                  { backgroundColor: colors.muted, borderColor: emailFocused ? colors.primary : colors.border },
+                ]}
+              >
+                <Feather name="mail" size={18} color={emailFocused ? colors.primary : colors.mutedForeground} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.foreground }]}
                   placeholder="Email address"
-                  placeholderTextColor="#5C7A99"
+                  placeholderTextColor={colors.mutedForeground}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -96,13 +102,18 @@ export default function LoginScreen() {
               </View>
 
               {/* Password */}
-              <View style={[styles.inputRow, passFocused && styles.inputRowFocused]}>
-                <Feather name="lock" size={18} color={passFocused ? "#1E90FF" : "#5C7A99"} />
+              <View
+                style={[
+                  styles.inputRow,
+                  { backgroundColor: colors.muted, borderColor: passFocused ? colors.primary : colors.border },
+                ]}
+              >
+                <Feather name="lock" size={18} color={passFocused ? colors.primary : colors.mutedForeground} />
                 <TextInput
                   ref={passwordRef}
-                  style={styles.input}
+                  style={[styles.input, { color: colors.foreground }]}
                   placeholder="Password"
-                  placeholderTextColor="#5C7A99"
+                  placeholderTextColor={colors.mutedForeground}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPass}
@@ -115,14 +126,17 @@ export default function LoginScreen() {
                   <Feather
                     name={showPass ? "eye-off" : "eye"}
                     size={18}
-                    color="#5C7A99"
+                    color={colors.mutedForeground}
                   />
                 </Pressable>
               </View>
 
               {/* Sign In button */}
               <Pressable
-                style={({ pressed }) => [styles.signInBtn, { opacity: pressed ? 0.88 : 1 }]}
+                style={({ pressed }) => [
+                  styles.signInBtn,
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
+                ]}
                 onPress={handleLogin}
                 disabled={loading}
               >
@@ -136,74 +150,59 @@ export default function LoginScreen() {
 
             {/* Divider */}
             <View style={styles.dividerRow}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>New to AfuChat?</Text>
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>New to AfuChat?</Text>
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
             </View>
 
             {/* Create account */}
             <Pressable
-              style={({ pressed }) => [styles.createBtn, { opacity: pressed ? 0.88 : 1 }]}
+              style={({ pressed }) => [
+                styles.createBtn,
+                { borderColor: colors.primary, opacity: pressed ? 0.88 : 1 },
+              ]}
               onPress={() => router.push("/(auth)/register")}
             >
-              <Text style={styles.createBtnText}>Create an Account</Text>
+              <Text style={[styles.createBtnText, { color: colors.primary }]}>Create an Account</Text>
             </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
+  screen: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 36 },
 
   logoWrap: { alignItems: "center", gap: 12 },
-  iconShadowWrap: {
-    shadowColor: "#1E90FF",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-    elevation: 12,
-  },
   logo: { width: 84, height: 84, borderRadius: 22 },
   appName: {
     fontSize: 28,
     fontFamily: "Inter_700Bold",
-    color: "#FFFFFF",
     letterSpacing: -0.6,
   },
   tagline: {
     fontSize: 15,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.4)",
     letterSpacing: 0.2,
   },
 
   card: {
-    backgroundColor: "#0D1526",
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: "#172035",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.4,
-    shadowRadius: 32,
-    elevation: 12,
     gap: 6,
   },
   cardTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: "Inter_700Bold",
-    color: "#EDF2FB",
     letterSpacing: -0.4,
   },
   cardSubtitle: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    color: "#5C7A99",
     marginBottom: 6,
   },
 
@@ -211,35 +210,22 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#111C30",
     borderWidth: 1.5,
-    borderColor: "#172035",
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 13,
     gap: 10,
-  },
-  inputRowFocused: {
-    borderColor: "#1E90FF",
-    backgroundColor: "#0E2040",
   },
   input: {
     flex: 1,
     fontSize: 15,
     fontFamily: "Inter_400Regular",
-    color: "#EDF2FB",
   },
   signInBtn: {
-    backgroundColor: "#1E90FF",
-    borderRadius: 14,
+    borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
     marginTop: 4,
-    shadowColor: "#1E90FF",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
-    elevation: 8,
   },
   signInBtnText: {
     color: "#fff",
@@ -254,22 +240,19 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 10,
   },
-  divider: { flex: 1, height: 1, backgroundColor: "#172035" },
+  divider: { flex: 1, height: 1 },
   dividerText: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "#5C7A99",
   },
 
   createBtn: {
     borderWidth: 1.5,
-    borderColor: "#1E90FF",
-    borderRadius: 14,
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
   },
   createBtnText: {
-    color: "#1E90FF",
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
   },

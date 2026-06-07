@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
+
 import {
   Alert,
   Animated,
@@ -19,6 +20,7 @@ import { Avatar } from "@/components/Avatar";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
+import { useTheme } from "@/context/ThemeContext";
 import { useColors } from "@/hooks/useColors";
 import { getDisplayName } from "@/lib/supabase";
 
@@ -244,6 +246,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile, signOut, user } = useAuth();
   const { isOnline: netOnline, pendingCount } = useOffline();
+  const { themeMode, toggleTheme } = useTheme();
 
   const name = getDisplayName(profile);
 
@@ -278,13 +281,26 @@ export default function ProfileScreen() {
         >
           <View style={styles.bannerTitleRow}>
             <Text style={styles.bannerTitle}>My Profile</Text>
-            <Pressable
-              style={styles.editBtn}
-              onPress={() => { Haptics.selectionAsync(); router.push("/profile/edit"); }}
-              hitSlop={8}
-            >
-              <Ionicons name="pencil" size={16} color="#fff" />
-            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Pressable
+                style={styles.editBtn}
+                onPress={() => { Haptics.selectionAsync(); toggleTheme(); }}
+                hitSlop={8}
+              >
+                <Ionicons
+                  name={themeMode === "dark" ? "sunny" : "moon"}
+                  size={16}
+                  color="#fff"
+                />
+              </Pressable>
+              <Pressable
+                style={styles.editBtn}
+                onPress={() => { Haptics.selectionAsync(); router.push("/profile/edit"); }}
+                hitSlop={8}
+              >
+                <Ionicons name="pencil" size={16} color="#fff" />
+              </Pressable>
+            </View>
           </View>
 
           {/* Avatar + name */}

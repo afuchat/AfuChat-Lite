@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -19,6 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
+import { useColors } from "@/hooks/useColors";
 
 const STEPS = ["Profile", "Account"];
 
@@ -26,6 +26,7 @@ export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signUp } = useAuth();
+  const colors = useColors();
 
   const [step, setStep] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -109,7 +110,7 @@ export default function RegisterScreen() {
   const progress = (step + 1) / STEPS.length;
 
   return (
-    <LinearGradient colors={["#06090F", "#0A1A36", "#06090F"]} style={styles.gradient}>
+    <View style={[styles.gradient, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -125,7 +126,7 @@ export default function RegisterScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Pressable onPress={goBack} style={styles.backBtn} hitSlop={8}>
-              <Feather name="arrow-left" size={22} color="#EDF2FB" />
+              <Feather name="arrow-left" size={22} color={colors.foreground} />
             </Pressable>
             <View style={styles.stepInfo}>
               <Text style={styles.stepLabel}>
@@ -204,7 +205,7 @@ export default function RegisterScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
