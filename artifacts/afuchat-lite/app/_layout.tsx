@@ -10,7 +10,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -31,32 +31,29 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, loading: authLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
-  // Check onboarding status once
+  // Re-read AsyncStorage on every segment/session change so a freshly
+  // completed onboarding is always reflected — never use stale cached state.
   useEffect(() => {
+    if (authLoading) return;
+
     AsyncStorage.getItem(ONBOARDING_DONE_KEY).then((val) => {
-      setOnboarded(val === "1");
+      const onboarded = val === "1";
+      const inAuth = segments[0] === "(auth)";
+      const inOnboarding = segments[0] === "onboarding";
+      const inTabs = segments[0] === "(tabs)";
+      const inChat = segments[0] === "chat";
+      const inProfile = segments[0] === "profile";
+
+      if (!onboarded && !inOnboarding) {
+        router.replace("/onboarding");
+      } else if (onboarded && !session && !inAuth) {
+        router.replace("/(auth)/login");
+      } else if (onboarded && session && !inTabs && !inChat && !inProfile) {
+        router.replace("/(tabs)/chats");
+      }
     });
-  }, []);
-
-  useEffect(() => {
-    if (authLoading || onboarded === null) return;
-
-    const inAuth = segments[0] === "(auth)";
-    const inOnboarding = segments[0] === "onboarding";
-    const inTabs = segments[0] === "(tabs)";
-    const inChat = segments[0] === "chat";
-    const inProfile = segments[0] === "profile";
-
-    if (!onboarded && !inOnboarding) {
-      router.replace("/onboarding");
-    } else if (onboarded && !session && !inAuth) {
-      router.replace("/(auth)/login");
-    } else if (onboarded && session && !inTabs && !inChat && !inProfile) {
-      router.replace("/(tabs)/chats");
-    }
-  }, [session, authLoading, onboarded, segments]);
+  }, [session, authLoading, segments]);
 
   return <>{children}</>;
 }
