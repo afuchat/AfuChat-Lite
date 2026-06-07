@@ -45,6 +45,9 @@ export function Avatar({ name, uri, size = 40, isOnline, style, square }: Props)
   const fontSize = size * 0.38;
   const radius = square ? size * 0.2 : size / 2;
 
+  const dotSize = Math.round(size * 0.28);
+  const ringSize = dotSize + 4;
+
   return (
     <View style={[{ position: "relative", width: size, height: size }, style]}>
       {uri ? (
@@ -70,18 +73,26 @@ export function Avatar({ name, uri, size = 40, isOnline, style, square }: Props)
       {isOnline !== undefined && (
         <View
           style={[
-            styles.onlineDot,
+            styles.dotRing,
             {
-              backgroundColor: isOnline ? colors.online : colors.offline,
-              width: size * 0.28,
-              height: size * 0.28,
-              borderRadius: size * 0.14,
-              right: 0,
-              bottom: 0,
-              borderColor: colors.background,
+              width: ringSize,
+              height: ringSize,
+              borderRadius: ringSize / 2,
+              right: -1,
+              bottom: -1,
+              backgroundColor: colors.background,
             },
           ]}
-        />
+        >
+          <View
+            style={{
+              width: dotSize,
+              height: dotSize,
+              borderRadius: dotSize / 2,
+              backgroundColor: isOnline ? "#22C55E" : colors.mutedForeground,
+            }}
+          />
+        </View>
       )}
     </View>
   );
@@ -95,8 +106,9 @@ const styles = StyleSheet.create({
   initials: {
     fontFamily: "Inter_600SemiBold",
   },
-  onlineDot: {
+  dotRing: {
     position: "absolute",
-    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

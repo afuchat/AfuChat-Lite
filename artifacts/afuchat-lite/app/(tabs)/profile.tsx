@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
@@ -320,7 +319,9 @@ export default function ProfileScreen() {
               <View style={styles.nameRow}>
                 <Text style={styles.profileName}>{name}</Text>
                 {profile?.is_verified && (
-                  <AfuChatLogo size={22} />
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark" size={11} color="#1E90FF" />
+                  </View>
                 )}
               </View>
               <Text style={styles.profileHandle}>@{profile?.handle}</Text>
@@ -344,9 +345,17 @@ export default function ProfileScreen() {
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.foreground }]}>
-                {netOnline ? "Online" : "Offline"}
-              </Text>
+              <View style={styles.statusRow}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    { backgroundColor: netOnline ? "#22C55E" : colors.mutedForeground },
+                  ]}
+                />
+                <Text style={[styles.statValue, { color: colors.foreground }]}>
+                  {netOnline ? "Online" : "Offline"}
+                </Text>
+              </View>
               <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Status</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
@@ -521,4 +530,18 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 15, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
   statDivider: { width: StyleSheet.hairlineWidth, height: 32 },
+
+  statusRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+
+  verifiedBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "rgba(30,144,255,0.3)",
+  },
 });

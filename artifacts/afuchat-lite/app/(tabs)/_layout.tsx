@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname, useRouter } from "expo-router";
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
@@ -12,16 +12,19 @@ type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 const TABS = [
   {
     name: "chats",
+    label: "Chats",
     icon: "chatbubbles-outline" as IoniconsName,
     iconFocused: "chatbubbles" as IoniconsName,
   },
   {
     name: "feed",
+    label: "Feed",
     icon: "albums-outline" as IoniconsName,
     iconFocused: "albums" as IoniconsName,
   },
   {
     name: "profile",
+    label: "Profile",
     icon: "person-circle-outline" as IoniconsName,
     iconFocused: "person-circle" as IoniconsName,
   },
@@ -41,7 +44,7 @@ function CustomTabBar() {
       style={[styles.wrapper, { bottom: insets.bottom + 14 }]}
       pointerEvents="box-none"
     >
-      <View style={[styles.pill, { backgroundColor: colors.tabBar }]}>
+      <View style={[styles.pill, { backgroundColor: colors.tabBar, borderColor: colors.border }]}>
         {TABS.map((tab, index) => {
           const focused = activeIndex === index;
           const badge = tab.name === "chats" && totalUnread > 0 ? totalUnread : 0;
@@ -53,27 +56,31 @@ function CustomTabBar() {
               style={styles.tabBtn}
               hitSlop={4}
             >
-              <View style={[styles.iconPill, focused && styles.iconPillActive]}>
+              <View style={styles.iconArea}>
                 <View style={{ position: "relative" }}>
-                  {focused ? (
-                    <Image
-                      source={require("../../assets/images/logo.png")}
-                      style={styles.activeTabLogo}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Ionicons
-                      name={tab.icon}
-                      size={22}
-                      color={colors.mutedForeground}
-                    />
-                  )}
+                  <Ionicons
+                    name={focused ? tab.iconFocused : tab.icon}
+                    size={24}
+                    color={focused ? colors.primary : colors.mutedForeground}
+                  />
                   {badge > 0 && (
-                    <View style={styles.badge}>
+                    <View style={[styles.badge, { borderColor: colors.tabBar }]}>
                       <Text style={styles.badgeText}>{badge > 9 ? "9+" : badge}</Text>
                     </View>
                   )}
                 </View>
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    { color: focused ? colors.primary : colors.mutedForeground },
+                    focused && styles.tabLabelActive,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+                {focused && (
+                  <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
+                )}
               </View>
             </Pressable>
           );
@@ -87,9 +94,7 @@ export default function TabLayout() {
   return (
     <Tabs
       tabBar={() => <CustomTabBar />}
-      screenOptions={{
-        headerShown: false,
-      }}
+      screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="chats" />
       <Tabs.Screen name="feed" />
@@ -108,56 +113,55 @@ const styles = StyleSheet.create({
   } as any,
   pill: {
     flexDirection: "row",
-    width: 260,
-    height: 60,
-    borderRadius: 30,
+    width: 280,
+    height: 64,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "space-evenly",
-    elevation: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    elevation: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
     paddingHorizontal: 8,
   },
   tabBtn: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    height: 60,
+    height: 64,
   },
-  iconPill: {
-    width: 64,
-    height: 36,
-    borderRadius: 18,
+  iconArea: {
     alignItems: "center",
-    justifyContent: "center",
+    gap: 2,
   },
-  iconPillActive: {
-    backgroundColor: "#1E90FF",
-    shadowColor: "#1E90FF",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 6,
+  tabLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    letterSpacing: 0.2,
   },
-  activeTabLogo: {
-    width: 22,
-    height: 22,
+  tabLabelActive: {
+    fontFamily: "Inter_600SemiBold",
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 1,
   },
   badge: {
     position: "absolute",
     top: -4,
-    right: -8,
+    right: -9,
     backgroundColor: "#EF4444",
     borderRadius: 8,
-    minWidth: 14,
-    height: 14,
+    minWidth: 15,
+    height: 15,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 3,
     borderWidth: 1.5,
-    borderColor: "#fff",
   },
-  badgeText: { color: "#fff", fontSize: 7, fontWeight: "700" },
+  badgeText: { color: "#fff", fontSize: 7.5, fontFamily: "Inter_700Bold" },
 });
