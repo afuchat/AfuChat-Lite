@@ -329,7 +329,7 @@ export default function ChatScreen() {
           const msg = payload.new as Message;
           msgMap.current.set(msg.id, msg);
           setMessages((prev) => {
-            const without = prev.filter((m) => !m.local_id || m.local_id !== (msg as any).local_id);
+            const without = prev.filter((m) => !m.local_id || m.local_id !== msg.local_id);
             return [{ ...msg, pending: false }, ...without];
           });
         }

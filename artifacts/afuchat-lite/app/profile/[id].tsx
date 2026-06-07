@@ -104,8 +104,8 @@ export default function UserProfileScreen() {
         pathname: "/chat/[id]",
         params: { id: newChat.id, name: getDisplayName(profile), isGroup: "0", avatarUrl: profile.avatar_url ?? "", otherId: profile.id, isVerified: profile.is_verified ? "1" : "0" },
       });
-    } catch (e: any) {
-      console.error("openChat error", e);
+    } catch {
+      // navigation failed silently — user can retry
     } finally {
       if (mounted.current) setStarting(false);
     }
