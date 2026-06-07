@@ -17,6 +17,8 @@ import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   Chat,
   Profile,
@@ -83,7 +85,7 @@ export default function ChatsScreen() {
 
       const chatIds = memberships.map((m) => m.chat_id);
 
-      const [chatsResult, membersResult, messagesResult, unreadResult] = await Promise.all([
+      const [chatsResult, membersResult, messagesResult] = await Promise.all([
         supabase
           .from("chats")
           .select("*")
@@ -100,13 +102,7 @@ export default function ChatsScreen() {
           .select("chat_id, encrypted_content, sent_at, sender_id")
           .in("chat_id", chatIds)
           .order("sent_at", { ascending: false })
-          .limit(Math.max(chatIds.length * 3, 30)),
-        supabase
-          .from("messages")
-          .select("chat_id")
-          .in("chat_id", chatIds)
-          .neq("sender_id", user.id)
-          .is("read_at", null),
+          .limit(Math.max(chatIds.length * 5, 50)),
       ]);
 
       if (chatsResult.error) throw chatsResult.error;
@@ -114,7 +110,16 @@ export default function ChatsScreen() {
       const chats = chatsResult.data ?? [];
       const allMembers = membersResult.data ?? [];
       const allMessages = messagesResult.data ?? [];
-      const unreadRows = unreadResult.data ?? [];
+
+      // Load last-read timestamps from AsyncStorage (set when user opens a chat)
+      const lastReadEntries = await AsyncStorage.multiGet(
+        chatIds.map((id) => `lastRead:${id}`)
+      );
+      const lastReadMap = new Map<string, number>(
+        lastReadEntries
+          .filter(([, val]) => val !== null)
+          .map(([key, val]) => [key.replace("lastRead:", ""), new Date(val!).getTime()])
+      );
 
       const otherUserIds = [...new Set(allMembers.map((m) => m.user_id))];
       const { data: profiles } = otherUserIds.length
@@ -129,25 +134,33 @@ export default function ChatsScreen() {
       for (const m of allMembers) {
         if (!memberMap.has(m.chat_id)) memberMap.set(m.chat_id, m.user_id);
       }
-      const lastMsgMap = new Map<string, (typeof allMessages)[0]>();
+
+      // Group messages by chat for last-message and unread counting
+      const msgsByChatId = new Map<string, typeof allMessages>();
       for (const msg of allMessages) {
-        if (!lastMsgMap.has(msg.chat_id)) lastMsgMap.set(msg.chat_id, msg);
-      }
-      const unreadMap = new Map<string, number>();
-      for (const r of unreadRows) {
-        unreadMap.set(r.chat_id, (unreadMap.get(r.chat_id) ?? 0) + 1);
+        const list = msgsByChatId.get(msg.chat_id) ?? [];
+        list.push(msg);
+        msgsByChatId.set(msg.chat_id, list);
       }
 
       const enriched: ChatRow[] = chats.map((chat: Chat) => {
         const otherId = memberMap.get(chat.id);
         const otherUser = otherId ? (profileMap.get(otherId) ?? null) : null;
-        const last = lastMsgMap.get(chat.id) ?? null;
+        const chatMsgs = msgsByChatId.get(chat.id) ?? [];
+        const last = chatMsgs[0] ?? null; // already ordered desc
+
+        // Unread = messages from others sent AFTER lastRead timestamp
+        const lastReadAt = lastReadMap.get(chat.id) ?? 0;
+        const unreadCount = chatMsgs.filter(
+          (m) => m.sender_id !== user.id && new Date(m.sent_at).getTime() > lastReadAt
+        ).length;
+
         return {
           chat,
           otherUser,
           lastMessage: last?.encrypted_content ?? null,
           lastMessageAt: last?.sent_at ?? chat.updated_at,
-          unreadCount: unreadMap.get(chat.id) ?? 0,
+          unreadCount,
           typingName: typingMap.get(chat.id) ?? null,
         };
       });

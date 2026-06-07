@@ -15,6 +15,8 @@ import { Swipeable } from "react-native-gesture-handler";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { Avatar } from "@/components/Avatar";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { useAuth } from "@/context/AuthContext";
@@ -282,14 +284,9 @@ export default function ChatScreen() {
   }, []);
 
   const markAsRead = useCallback(async () => {
-    if (!id || !user) return;
-    await supabase
-      .from("messages")
-      .update({ read_at: new Date().toISOString() })
-      .eq("chat_id", id)
-      .neq("sender_id", user.id)
-      .is("read_at", null);
-  }, [id, user]);
+    if (!id) return;
+    await AsyncStorage.setItem(`lastRead:${id}`, new Date().toISOString());
+  }, [id]);
 
   const loadMessages = useCallback(async () => {
     if (!id) return;
