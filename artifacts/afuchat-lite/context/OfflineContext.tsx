@@ -10,8 +10,6 @@ import React, {
 
 import { supabase } from "@/lib/supabase";
 
-/** Pending message stored locally while offline.
- *  Stores plaintext in encrypted_content per AfuChat Lite convention. */
 export type PendingMessage = {
   localId: string;
   chatId: string;
@@ -30,6 +28,9 @@ type OfflineContextType = {
 const OfflineContext = createContext<OfflineContextType | null>(null);
 const QUEUE_KEY = "afuchat_lite_offline_queue_v1";
 
+// Android's own connectivity check endpoint — returns 204 when online, fast
+const PROBE_URL = "https://connectivity.gstatic.com/generate_204";
+
 export function OfflineProvider({ children }: { children: React.ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
   const [pending, setPending] = useState<PendingMessage[]>([]);
@@ -41,32 +42,34 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     return () => { mounted.current = false; };
   }, []);
 
-  // Load queue from storage on mount
   useEffect(() => {
     AsyncStorage.getItem(QUEUE_KEY).then((raw) => {
       if (raw && mounted.current) setPending(JSON.parse(raw));
     }).catch(() => {});
   }, []);
 
-  // Simple connectivity probe every 20 s
   useEffect(() => {
     const probe = async () => {
       try {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 5000);
-        const res = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/`, {
-          headers: { apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY! },
+        const timer = setTimeout(() => ctrl.abort(), 4000);
+        const res = await fetch(PROBE_URL, {
+          method: "HEAD",
           signal: ctrl.signal,
+          cache: "no-store",
         });
         clearTimeout(timer);
-        if (mounted.current) setIsOnline(res.ok);
+        // 204 = online; anything reachable counts as online
+        if (mounted.current) setIsOnline(res.status < 500);
       } catch {
         if (mounted.current) setIsOnline(false);
       }
     };
-    probe();
-    const id = setInterval(probe, 20_000);
-    return () => clearInterval(id);
+
+    // Small delay so app doesn't flash "offline" on startup before the first probe completes
+    const initial = setTimeout(probe, 1500);
+    const interval = setInterval(probe, 20_000);
+    return () => { clearTimeout(initial); clearInterval(interval); };
   }, []);
 
   const saveQueue = async (msgs: PendingMessage[]) => {
@@ -74,9 +77,8 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   };
 
   const queueMessage = useCallback(async (msg: PendingMessage) => {
-    const next = (prev: PendingMessage[]) => [...prev, msg];
     setPending((prev) => {
-      const updated = next(prev);
+      const updated = [...prev, msg];
       saveQueue(updated).catch(() => {});
       return updated;
     });
@@ -110,7 +112,6 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pending]);
 
-  // Sync when we come back online
   useEffect(() => {
     if (isOnline && pending.length > 0) syncPending();
   }, [isOnline]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -62,6 +62,7 @@ export default function ChatsScreen() {
   const loadChats = useCallback(async () => {
     if (!user) return;
     try {
+      // Step 1: get this user's chat IDs
       const { data: memberships, error: memErr } = await supabase
         .from("chat_members")
         .select("chat_id")
@@ -75,54 +76,69 @@ export default function ChatsScreen() {
 
       const chatIds = memberships.map((m) => m.chat_id);
 
-      const { data: chats, error: chatErr } = await supabase
-        .from("chats")
-        .select("*")
-        .in("id", chatIds)
-        .eq("is_channel", false)
-        .order("updated_at", { ascending: false });
+      // Step 2: batch fetch chats + all members + recent messages in parallel (3 queries total)
+      const [chatsResult, membersResult, messagesResult] = await Promise.all([
+        supabase
+          .from("chats")
+          .select("*")
+          .in("id", chatIds)
+          .eq("is_channel", false)
+          .order("updated_at", { ascending: false }),
+        supabase
+          .from("chat_members")
+          .select("chat_id, user_id")
+          .in("chat_id", chatIds)
+          .neq("user_id", user.id),
+        supabase
+          .from("messages")
+          .select("chat_id, encrypted_content, sent_at, sender_id")
+          .in("chat_id", chatIds)
+          .order("sent_at", { ascending: false })
+          .limit(Math.max(chatIds.length * 3, 30)),
+      ]);
 
-      if (chatErr) throw chatErr;
+      if (chatsResult.error) throw chatsResult.error;
 
-      const enriched: ChatRow[] = await Promise.all(
-        (chats ?? []).map(async (chat: Chat) => {
-          let otherUser: Profile | null = null;
-          if (!chat.is_group) {
-            const { data: others } = await supabase
-              .from("chat_members")
-              .select("user_id")
-              .eq("chat_id", chat.id)
-              .neq("user_id", user.id)
-              .limit(1);
+      const chats = chatsResult.data ?? [];
+      const allMembers = membersResult.data ?? [];
+      const allMessages = messagesResult.data ?? [];
 
-            if (others?.length) {
-              const { data: p } = await supabase
-                .from("profiles")
-                .select("id, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
-                .eq("id", others[0].user_id)
-                .single();
-              otherUser = (p as Profile) ?? null;
-            }
-          }
+      // Step 3: collect unique other-user IDs, batch fetch profiles
+      const otherUserIds = [...new Set(allMembers.map((m) => m.user_id))];
 
-          const { data: msgs } = await supabase
-            .from("messages")
-            .select("encrypted_content, sent_at, sender_id")
-            .eq("chat_id", chat.id)
-            .order("sent_at", { ascending: false })
-            .limit(1);
+      const { data: profiles } = otherUserIds.length
+        ? await supabase
+            .from("profiles")
+            .select("id, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
+            .in("id", otherUserIds)
+        : { data: [] as Profile[] };
 
-          const last = msgs?.[0] ?? null;
+      // Build lookup maps on client — O(n), no extra queries
+      const profileMap = new Map((profiles ?? []).map((p: Profile) => [p.id, p]));
 
-          return {
-            chat,
-            otherUser,
-            lastMessage: last?.encrypted_content ?? null,
-            lastMessageAt: last?.sent_at ?? chat.updated_at,
-            unread: last ? last.sender_id !== user.id : false,
-          };
-        })
-      );
+      const memberMap = new Map<string, string>(); // chatId → first other userId
+      for (const m of allMembers) {
+        if (!memberMap.has(m.chat_id)) memberMap.set(m.chat_id, m.user_id);
+      }
+
+      const lastMsgMap = new Map<string, (typeof allMessages)[0]>(); // chatId → latest msg
+      for (const msg of allMessages) {
+        if (!lastMsgMap.has(msg.chat_id)) lastMsgMap.set(msg.chat_id, msg);
+      }
+
+      // Step 4: assemble rows — pure client-side, zero extra queries
+      const enriched: ChatRow[] = chats.map((chat: Chat) => {
+        const otherId = memberMap.get(chat.id);
+        const otherUser = otherId ? (profileMap.get(otherId) ?? null) : null;
+        const last = lastMsgMap.get(chat.id) ?? null;
+        return {
+          chat,
+          otherUser,
+          lastMessage: last?.encrypted_content ?? null,
+          lastMessageAt: last?.sent_at ?? chat.updated_at,
+          unread: last ? last.sender_id !== user.id : false,
+        };
+      });
 
       enriched.sort((a, b) => {
         const ta = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
@@ -152,7 +168,6 @@ export default function ChatsScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <OfflineBanner />
 
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -179,9 +194,6 @@ export default function ChatsScreen() {
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
-            Loading your chats…
-          </Text>
         </View>
       ) : error ? (
         <View style={styles.centered}>
