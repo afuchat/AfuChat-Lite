@@ -32,6 +32,10 @@ localPort = 21282
 externalPort = 3000
 exposeLocalhost = true
 
+[[ports]]
+localPort = 21283
+externalPort = 3002
+
 [userenv]
 
 [userenv.shared]
