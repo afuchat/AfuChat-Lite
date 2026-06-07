@@ -281,14 +281,10 @@ export default function ProfileScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Pressable
                 style={styles.editBtn}
-                onPress={() => { Haptics.selectionAsync(); toggleTheme(); }}
+                onPress={() => { Haptics.selectionAsync(); router.push("/settings" as any); }}
                 hitSlop={8}
               >
-                <Ionicons
-                  name={themeMode === "dark" ? "sunny" : "moon"}
-                  size={16}
-                  color="#fff"
-                />
+                <Ionicons name="settings-outline" size={16} color="#fff" />
               </Pressable>
               <Pressable
                 style={styles.editBtn}

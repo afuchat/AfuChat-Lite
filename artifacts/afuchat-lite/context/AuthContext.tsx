@@ -8,6 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { AppState, AppStateStatus } from "react-native";
 
 import { Profile, supabase } from "@/lib/supabase";
 
@@ -40,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const mounted = useRef(true);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
     mounted.current = true;
@@ -70,6 +73,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
+
+  // ── Last-seen heartbeat ────────────────────────────────────────────────────
+  const pingLastSeen = useCallback(async (uid: string) => {
+    try {
+      const visibility = await AsyncStorage.getItem("settings:lastSeenVisibility") ?? "everyone";
+      if (visibility === "nobody") return;
+      await supabase
+        .from("profiles")
+        .update({ last_seen: new Date().toISOString() })
+        .eq("id", uid);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      return;
+    }
+
+    // Immediate ping on sign-in / re-mount
+    pingLastSeen(user.id);
+
+    // Ping every 60 s while active
+    heartbeatRef.current = setInterval(() => pingLastSeen(user.id), 60_000);
+
+    // Ping when app comes to foreground
+    const sub = AppState.addEventListener("change", (nextState: AppStateStatus) => {
+      if (appStateRef.current.match(/inactive|background/) && nextState === "active") {
+        pingLastSeen(user.id);
+      }
+      appStateRef.current = nextState;
+    });
+
+    return () => {
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      sub.remove();
+    };
+  }, [user, pingLastSeen]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -131,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       await supabase.auth.signOut();
       const keys = await AsyncStorage.getAllKeys();
       const profileKeys = keys.filter((k) => k.startsWith("profile:"));

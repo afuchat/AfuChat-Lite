@@ -105,6 +105,10 @@ export default function RootLayout() {
                             name="new-chat"
                             options={{ headerShown: false, animation: "slide_from_bottom" }}
                           />
+                          <Stack.Screen
+                            name="settings"
+                            options={{ headerShown: false, animation: "slide_from_right" }}
+                          />
                         </Stack>
                       </AuthGate>
                     </KeyboardProvider>
