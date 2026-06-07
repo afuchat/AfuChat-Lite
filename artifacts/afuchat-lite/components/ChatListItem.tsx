@@ -3,35 +3,34 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Avatar } from "@/components/Avatar";
 import { useColors } from "@/hooks/useColors";
-import { Conversation } from "@/lib/supabase";
+import { Chat, Profile, getDisplayName, isOnline } from "@/lib/supabase";
 
 type Props = {
-  conversation: Conversation;
-  otherUserName: string;
-  unreadCount?: number;
+  chat: Chat;
+  otherUser: Profile | null;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
   onPress: () => void;
 };
 
-function formatTime(iso: string | null): string {
+function formatTime(iso: string | null | undefined): string {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
-  if (diff < 86400000) {
+  if (diff < 86_400_000) {
     const h = d.getHours();
     const m = d.getMinutes().toString().padStart(2, "0");
-    const ampm = h >= 12 ? "PM" : "AM";
-    return `${h % 12 || 12}:${m} ${ampm}`;
+    return `${h % 12 || 12}:${m} ${h >= 12 ? "PM" : "AM"}`;
   }
-  if (diff < 604800000) {
-    return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
-  }
+  if (diff < 604_800_000) return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function ChatListItem({ conversation, otherUserName, unreadCount = 0, onPress }: Props) {
+export function ChatListItem({ chat, otherUser, lastMessage, lastMessageAt, onPress }: Props) {
   const colors = useColors();
-  const hasUnread = unreadCount > 0;
+  const title = chat.is_group ? (chat.name ?? "Group") : getDisplayName(otherUser);
+  const online = !chat.is_group && isOnline(otherUser);
 
   return (
     <TouchableOpacity
@@ -39,58 +38,21 @@ export function ChatListItem({ conversation, otherUserName, unreadCount = 0, onP
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Avatar
-        name={conversation.name || otherUserName}
-        size={52}
-      />
+      <Avatar name={title} size={52} isOnline={online} />
       <View style={styles.content}>
         <View style={styles.topRow}>
-          <Text
-            style={[
-              styles.name,
-              {
-                color: colors.foreground,
-                fontFamily: hasUnread ? "Inter_600SemiBold" : "Inter_500Medium",
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {conversation.name || otherUserName}
+          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
+            {title}
           </Text>
-          <Text
-            style={[
-              styles.time,
-              {
-                color: hasUnread ? colors.primary : colors.mutedForeground,
-                fontFamily: hasUnread ? "Inter_500Medium" : "Inter_400Regular",
-              },
-            ]}
-          >
-            {formatTime(conversation.last_message_at)}
-          </Text>
-        </View>
-        <View style={styles.bottomRow}>
-          <Text
-            style={[
-              styles.preview,
-              {
-                color: hasUnread ? colors.foreground : colors.mutedForeground,
-                fontFamily: hasUnread ? "Inter_500Medium" : "Inter_400Regular",
-                flex: 1,
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {conversation.last_message ?? "Start a conversation"}
-          </Text>
-          {hasUnread && (
-            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.badgeText}>
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </Text>
-            </View>
+          {lastMessageAt && (
+            <Text style={[styles.time, { color: colors.mutedForeground }]}>
+              {formatTime(lastMessageAt)}
+            </Text>
           )}
         </View>
+        <Text style={[styles.preview, { color: colors.mutedForeground }]} numberOfLines={1}>
+          {lastMessage ?? "Tap to start chatting"}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -104,42 +66,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 12,
   },
-  content: {
-    flex: 1,
-    gap: 3,
-  },
+  content: { flex: 1, gap: 3 },
   topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  name: {
-    fontSize: 16,
-    flex: 1,
-    marginRight: 8,
-  },
-  time: {
-    fontSize: 12,
-  },
-  bottomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  preview: {
-    fontSize: 14,
-  },
-  badge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 6,
-  },
-  badgeText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-  },
+  name: { fontSize: 16, fontFamily: "Inter_600SemiBold", flex: 1, marginRight: 8 },
+  time: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  preview: { fontSize: 14, fontFamily: "Inter_400Regular" },
 });

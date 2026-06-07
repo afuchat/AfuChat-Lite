@@ -14,7 +14,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Real profiles table uses display_name, handle, bio, last_seen
+// ─── Original DB types — DO NOT alter column names ───────────────────────────
+
 export type Profile = {
   id: string;
   display_name: string | null;
@@ -23,43 +24,67 @@ export type Profile = {
   avatar_url: string | null;
   last_seen: string | null;
   is_verified: boolean;
+  is_online?: boolean;
   acoin: number;
   created_at: string;
 };
 
-export type Conversation = {
+/** chats table — original AfuChat schema */
+export type Chat = {
   id: string;
   name: string | null;
   is_group: boolean;
-  created_by: string;
-  last_message: string | null;
-  last_message_at: string | null;
+  created_by: string | null;
+  user_id: string | null;
+  description: string | null;
+  avatar_url: string | null;
+  is_verified: boolean;
+  is_channel: boolean;
+  is_archived: boolean;
+  is_pinned: boolean;
+  who_can_send: string;
   created_at: string;
+  updated_at: string;
 };
 
-export type ConversationParticipant = {
+/** chat_members table — original AfuChat schema */
+export type ChatMember = {
   id: string;
-  conversation_id: string;
+  chat_id: string;
   user_id: string;
   joined_at: string;
+  is_admin: boolean;
   profile?: Profile;
 };
 
-export type ChatMessage = {
+/** messages table — original AfuChat schema.
+ *  Lite stores plaintext in encrypted_content (no E2E in Lite). */
+export type Message = {
   id: string;
-  conversation_id: string;
+  chat_id: string;
   sender_id: string;
-  content: string;
-  is_read: boolean;
-  local_id?: string;
-  created_at: string;
+  encrypted_content: string;
+  sent_at: string;
+  delivered_at: string | null;
+  read_at: string | null;
+  reply_to_message_id: string | null;
+  attachment_url: string | null;
+  attachment_type: string | null;
   sender?: Profile;
+  // client-only flags (never persisted)
   pending?: boolean;
   failed?: boolean;
+  local_id?: string;
 };
 
-// Helper to get display name from profile
-export function getDisplayName(profile: Profile | null | undefined): string {
-  if (!profile) return "Unknown";
-  return profile.display_name || `@${profile.handle}` || "Unknown";
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+export function getDisplayName(p: Profile | null | undefined): string {
+  if (!p) return "Unknown";
+  return p.display_name || `@${p.handle}` || "Unknown";
+}
+
+export function isOnline(p: Profile | null | undefined): boolean {
+  if (!p?.last_seen) return false;
+  return Date.now() - new Date(p.last_seen).getTime() < 5 * 60 * 1000;
 }

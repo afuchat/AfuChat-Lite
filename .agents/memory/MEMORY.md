@@ -1,1 +1,1 @@
-- [AfuChat Lite DB schema](afuchat-lite-schema.md) — profiles use display_name/handle/bio; app uses chat_messages table not messages
+- [AfuChat Lite DB schema](afuchat-lite-schema.md) — original tables: chats+chat_members+messages (encrypted_content stores plaintext in Lite)

@@ -10,58 +10,63 @@ import React, {
 
 import { supabase } from "@/lib/supabase";
 
-type PendingMessage = {
+/** Pending message stored locally while offline.
+ *  Stores plaintext in encrypted_content per AfuChat Lite convention. */
+export type PendingMessage = {
   localId: string;
-  conversationId: string;
+  chatId: string;
   senderId: string;
   content: string;
-  createdAt: string;
+  sentAt: string;
 };
 
 type OfflineContextType = {
   isOnline: boolean;
-  pendingMessages: PendingMessage[];
+  pendingCount: number;
   queueMessage: (msg: PendingMessage) => Promise<void>;
   syncPending: () => Promise<void>;
 };
 
 const OfflineContext = createContext<OfflineContextType | null>(null);
-const QUEUE_KEY = "offline_message_queue";
+const QUEUE_KEY = "afuchat_lite_offline_queue_v1";
 
 export function OfflineProvider({ children }: { children: React.ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
-  const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
-  const syncingRef = useRef(false);
+  const [pending, setPending] = useState<PendingMessage[]>([]);
+  const syncing = useRef(false);
+  const mounted = useRef(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(QUEUE_KEY).then((raw) => {
-      if (raw) setPendingMessages(JSON.parse(raw));
-    });
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
-    const checkOnline = async () => {
+  // Load queue from storage on mount
+  useEffect(() => {
+    AsyncStorage.getItem(QUEUE_KEY).then((raw) => {
+      if (raw && mounted.current) setPending(JSON.parse(raw));
+    }).catch(() => {});
+  }, []);
+
+  // Simple connectivity probe every 20 s
+  useEffect(() => {
+    const probe = async () => {
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 4000);
-        const r = await fetch(
-          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/profiles?limit=1`,
-          {
-            headers: {
-              apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
-              Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!}`,
-            },
-            signal: controller.signal,
-          }
-        );
-        clearTimeout(timeout);
-        setIsOnline(r.ok || r.status !== 0);
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/`, {
+          headers: { apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY! },
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        if (mounted.current) setIsOnline(res.ok);
       } catch {
-        setIsOnline(false);
+        if (mounted.current) setIsOnline(false);
       }
     };
-
-    checkOnline();
-    const interval = setInterval(checkOnline, 20000);
-    return () => clearInterval(interval);
+    probe();
+    const id = setInterval(probe, 20_000);
+    return () => clearInterval(id);
   }, []);
 
   const saveQueue = async (msgs: PendingMessage[]) => {
@@ -69,42 +74,49 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   };
 
   const queueMessage = useCallback(async (msg: PendingMessage) => {
-    setPendingMessages((prev) => {
-      const updated = [...prev, msg];
-      saveQueue(updated);
+    const next = (prev: PendingMessage[]) => [...prev, msg];
+    setPending((prev) => {
+      const updated = next(prev);
+      saveQueue(updated).catch(() => {});
       return updated;
     });
   }, []);
 
   const syncPending = useCallback(async () => {
-    if (syncingRef.current || pendingMessages.length === 0) return;
-    syncingRef.current = true;
+    if (syncing.current) return;
+    syncing.current = true;
+    try {
+      const queue = [...pending];
+      const remaining: PendingMessage[] = [];
 
-    const remaining: PendingMessage[] = [];
-    for (const msg of pendingMessages) {
-      const { error } = await supabase.from("chat_messages").insert({
-        conversation_id: msg.conversationId,
-        sender_id: msg.senderId,
-        content: msg.content,
-        local_id: msg.localId,
-        created_at: msg.createdAt,
-      });
-      if (error) remaining.push(msg);
+      for (const msg of queue) {
+        try {
+          const { error } = await supabase.from("messages").insert({
+            chat_id: msg.chatId,
+            sender_id: msg.senderId,
+            encrypted_content: msg.content,
+            sent_at: msg.sentAt,
+          });
+          if (error) remaining.push(msg);
+        } catch {
+          remaining.push(msg);
+        }
+      }
+
+      if (mounted.current) setPending(remaining);
+      await saveQueue(remaining);
+    } finally {
+      syncing.current = false;
     }
+  }, [pending]);
 
-    setPendingMessages(remaining);
-    await saveQueue(remaining);
-    syncingRef.current = false;
-  }, [pendingMessages]);
-
+  // Sync when we come back online
   useEffect(() => {
-    if (isOnline && pendingMessages.length > 0) {
-      syncPending();
-    }
-  }, [isOnline, pendingMessages.length, syncPending]);
+    if (isOnline && pending.length > 0) syncPending();
+  }, [isOnline]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <OfflineContext.Provider value={{ isOnline, pendingMessages, queueMessage, syncPending }}>
+    <OfflineContext.Provider value={{ isOnline, pendingCount: pending.length, queueMessage, syncPending }}>
       {children}
     </OfflineContext.Provider>
   );
