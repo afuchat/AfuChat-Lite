@@ -46,12 +46,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inAuth = segments[0] === "(auth)";
     const inOnboarding = segments[0] === "onboarding";
     const inTabs = segments[0] === "(tabs)";
+    const inChat = segments[0] === "chat";
+    const inProfile = segments[0] === "profile";
 
     if (!onboarded && !inOnboarding) {
       router.replace("/onboarding");
     } else if (onboarded && !session && !inAuth) {
       router.replace("/(auth)/login");
-    } else if (onboarded && session && (inAuth || inOnboarding)) {
+    } else if (onboarded && session && !inTabs && !inChat && !inProfile) {
       router.replace("/(tabs)/chats");
     }
   }, [session, authLoading, onboarded, segments]);
@@ -84,6 +86,7 @@ export default function RootLayout() {
                 <KeyboardProvider>
                   <AuthGate>
                     <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+                      <Stack.Screen name="index" />
                       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
                       <Stack.Screen name="(auth)" />
                       <Stack.Screen name="(tabs)" />
