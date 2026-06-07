@@ -190,11 +190,12 @@ function SlideItem({
           </View>
         </View>
 
-        {/* App icon for slide 1 */}
+        {/* AfuChat logo for slide 1 */}
         {slide.id === "1" && (
           <Image
-            source={require("@/assets/images/icon.png")}
+            source={require("@/assets/images/logo.png")}
             style={styles.appIcon}
+            resizeMode="contain"
           />
         )}
       </View>

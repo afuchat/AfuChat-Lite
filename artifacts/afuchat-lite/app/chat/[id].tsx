@@ -132,10 +132,11 @@ const bubbleStyles = StyleSheet.create({
 });
 
 export default function ChatScreen() {
-  const { id, name, isGroup } = useLocalSearchParams<{
+  const { id, name, isGroup, avatarUrl } = useLocalSearchParams<{
     id: string;
     name: string;
     isGroup: string;
+    avatarUrl?: string;
   }>();
 
   const colors = useColors();
@@ -331,7 +332,12 @@ export default function ChatScreen() {
           headerTitleStyle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
           headerShadowVisible: false,
           headerRight: () => (
-            <Avatar name={name ?? "?"} size={34} style={{ marginRight: Platform.OS === "ios" ? 0 : 12 }} />
+            <Avatar
+              uri={avatarUrl || undefined}
+              name={name ?? "?"}
+              size={34}
+              style={{ marginRight: Platform.OS === "ios" ? 0 : 12 }}
+            />
           ),
         }}
       />

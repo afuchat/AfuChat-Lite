@@ -61,12 +61,11 @@ export default function LoginScreen() {
         >
           {/* Logo */}
           <View style={styles.logoWrap}>
-            <View style={styles.iconShadowWrap}>
-              <Image
-                source={require("@/assets/images/icon.png")}
-                style={styles.logo}
-              />
-            </View>
+            <Image
+              source={require("@/assets/images/logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.appName}>AfuChat Lite</Text>
             <Text style={styles.tagline}>Fast. Simple. Yours.</Text>
           </View>

@@ -89,6 +89,10 @@ export default function RootLayout() {
                         name="chat/[id]"
                         options={{ headerShown: true, animation: "slide_from_right" }}
                       />
+                      <Stack.Screen
+                        name="profile/edit"
+                        options={{ headerShown: false, animation: "slide_from_right" }}
+                      />
                     </Stack>
                   </AuthGate>
                 </KeyboardProvider>

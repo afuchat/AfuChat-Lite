@@ -1,1 +1,2 @@
 - [AfuChat Lite DB schema](afuchat-lite-schema.md) — original tables: chats+chat_members+messages (encrypted_content stores plaintext in Lite)
+- [SVG logo conversion](svg-logo.md) — logo.png is a 256x256 transparent PNG (ImageMagick -background none from SVG with first path removed); used in login/onboarding, NOT the app icon (icon.png stays for launcher/tab bar).

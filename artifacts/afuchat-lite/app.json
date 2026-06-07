@@ -22,6 +22,10 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#1E90FF"
+      },
+      "notification": {
+        "icon": "./assets/images/logo.png",
+        "color": "#1E90FF"
       }
     },
     "plugins": [
