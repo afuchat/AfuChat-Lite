@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
@@ -41,10 +41,13 @@ function TabPill({
   );
 }
 
+const NAV_WIDTH = 168; // just wide enough for 3 icon pills
+
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const screenWidth = Dimensions.get("window").width;
   const [unreadCount, setUnreadCount] = useState(0);
   const mounted = useRef(true);
 
@@ -89,8 +92,8 @@ export default function TabLayout() {
         tabBarStyle: {
           position: "absolute",
           bottom: insets.bottom + 12,
-          left: 72,
-          right: 72,
+          left: (screenWidth - NAV_WIDTH) / 2,
+          width: NAV_WIDTH,
           height: 52,
           borderRadius: 26,
           backgroundColor: colors.tabBar,
