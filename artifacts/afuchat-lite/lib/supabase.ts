@@ -75,12 +75,23 @@ export type Message = {
 
 export type Post = {
   id: string;
-  user_id: string;
+  author_id: string;
   content: string;
   image_url: string | null;
   like_count: number | null;
   comment_count: number | null;
   created_at: string;
+  author?: Profile;
+  liked_by_me?: boolean;
+};
+
+export type PostReply = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  parent_reply_id: string | null;
   author?: Profile;
 };
 
