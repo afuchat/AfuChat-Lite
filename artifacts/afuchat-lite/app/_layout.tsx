@@ -18,6 +18,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { OfflineProvider } from "@/context/OfflineContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { UnreadProvider } from "@/context/UnreadContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -69,6 +70,7 @@ export default function RootLayout() {
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
+              <UnreadProvider>
               <OfflineProvider>
                 <GestureHandlerRootView style={{ flex: 1 }}>
                   <KeyboardProvider>
@@ -98,6 +100,7 @@ export default function RootLayout() {
                   </KeyboardProvider>
                 </GestureHandlerRootView>
               </OfflineProvider>
+              </UnreadProvider>
             </AuthProvider>
           </QueryClientProvider>
         </ErrorBoundary>

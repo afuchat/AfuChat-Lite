@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { Avatar } from "@/components/Avatar";
 import { useAuth } from "@/context/AuthContext";
+import { useUnread } from "@/context/UnreadContext";
 import { useColors } from "@/hooks/useColors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -56,6 +57,7 @@ export default function ChatsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { setTotalUnread } = useUnread();
 
   const [rows, setRows] = useState<ChatRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,7 +173,8 @@ export default function ChatsScreen() {
         return tb - ta;
       });
 
-      if (mounted.current) { setRows(enriched); setError(null); }
+      const total = enriched.reduce((sum, r) => sum + r.unreadCount, 0);
+      if (mounted.current) { setRows(enriched); setError(null); setTotalUnread(total); }
     } catch (e: any) {
       if (mounted.current) setError(e?.message ?? "Failed to load chats");
     } finally {
