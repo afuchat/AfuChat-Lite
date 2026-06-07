@@ -123,6 +123,19 @@ export default function ChatsScreen() {
           .map(([key, val]) => [key.replace("lastRead:", ""), new Date(val!).getTime()])
       );
 
+      // Seal the "already read" baseline for any chat never opened on this device.
+      // Without this, all historic messages default to unread (lastReadAt = 0).
+      const now = new Date().toISOString();
+      const unseenKeys: [string, string][] = chatIds
+        .filter((cid) => !lastReadMap.has(cid))
+        .map((cid) => [`lastRead:${cid}`, now]);
+      if (unseenKeys.length > 0) {
+        await AsyncStorage.multiSet(unseenKeys);
+        unseenKeys.forEach(([key]) =>
+          lastReadMap.set(key.replace("lastRead:", ""), Date.now())
+        );
+      }
+
       const otherUserIds = [...new Set(allMembers.map((m) => m.user_id))];
       const { data: profiles } = otherUserIds.length
         ? await supabase
