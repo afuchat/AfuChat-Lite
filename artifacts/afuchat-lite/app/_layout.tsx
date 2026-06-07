@@ -1,5 +1,4 @@
 import "react-native-url-polyfill/auto";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -19,7 +18,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { OfflineProvider } from "@/context/OfflineContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import { ONBOARDING_DONE_KEY } from "@/app/onboarding";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,27 +30,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const router = useRouter();
 
-  // Re-read AsyncStorage on every segment/session change so a freshly
-  // completed onboarding is always reflected — never use stale cached state.
   useEffect(() => {
     if (authLoading) return;
 
-    AsyncStorage.getItem(ONBOARDING_DONE_KEY).then((val) => {
-      const onboarded = val === "1";
-      const inAuth = segments[0] === "(auth)";
-      const inOnboarding = segments[0] === "onboarding";
-      const inTabs = segments[0] === "(tabs)";
-      const inChat = segments[0] === "chat";
-      const inProfile = segments[0] === "profile";
+    const inAuth = segments[0] === "(auth)";
+    const inTabs = segments[0] === "(tabs)";
+    const inChat = segments[0] === "chat";
+    const inProfile = segments[0] === "profile";
 
-      if (!onboarded && !inOnboarding) {
-        router.replace("/onboarding");
-      } else if (onboarded && !session && !inAuth) {
-        router.replace("/(auth)/login");
-      } else if (onboarded && session && !inTabs && !inChat && !inProfile) {
-        router.replace("/(tabs)/chats");
-      }
-    });
+    if (!session && !inAuth) {
+      router.replace("/(auth)/login");
+    } else if (session && !inTabs && !inChat && !inProfile) {
+      router.replace("/(tabs)/chats");
+    }
   }, [session, authLoading, segments]);
 
   return <>{children}</>;
@@ -75,34 +65,33 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <OfflineProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <KeyboardProvider>
-                  <AuthGate>
-                    <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
-                      <Stack.Screen name="index" />
-                      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-                      <Stack.Screen name="(auth)" />
-                      <Stack.Screen name="(tabs)" />
-                      <Stack.Screen
-                        name="chat/[id]"
-                        options={{ headerShown: true, animation: "slide_from_right" }}
-                      />
-                      <Stack.Screen
-                        name="profile/edit"
-                        options={{ headerShown: false, animation: "slide_from_right" }}
-                      />
-                    </Stack>
-                  </AuthGate>
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </OfflineProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <OfflineProvider>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  <KeyboardProvider>
+                    <AuthGate>
+                      <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="(auth)" />
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen
+                          name="chat/[id]"
+                          options={{ headerShown: true, animation: "slide_from_right" }}
+                        />
+                        <Stack.Screen
+                          name="profile/edit"
+                          options={{ headerShown: false, animation: "slide_from_right" }}
+                        />
+                      </Stack>
+                    </AuthGate>
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </OfflineProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
       </ThemeProvider>
     </SafeAreaProvider>
   );
