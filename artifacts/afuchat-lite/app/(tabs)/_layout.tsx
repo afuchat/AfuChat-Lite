@@ -9,28 +9,47 @@ import { useColors } from "@/hooks/useColors";
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 
-function TabLabel({ label, focused, color }: { label: string; focused: boolean; color: string }) {
+function TabItem({
+  icon,
+  iconFocused,
+  label,
+  focused,
+  color,
+  badge,
+}: {
+  icon: IoniconsName;
+  iconFocused: IoniconsName;
+  label: string;
+  focused: boolean;
+  color: string;
+  badge?: number;
+}) {
   return (
-    <Text style={[styles.label, { color, fontFamily: focused ? "Inter_700Bold" : "Inter_600SemiBold" }]}>
-      {label}
-    </Text>
-  );
-}
-
-function TabIcon({ name, color, size = 22 }: { name: IoniconsName; color: string; size?: number }) {
-  return <Ionicons name={name} size={size} color={color} />;
-}
-
-function ChatsTabIcon({ color, focused }: { color: string; focused: boolean }) {
-  const { pendingCount } = useOffline();
-  return (
-    <View style={{ position: "relative" }}>
-      <TabIcon name={focused ? "chatbubbles" : "chatbubbles-outline"} color={color} />
-      {pendingCount > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{pendingCount > 9 ? "9+" : pendingCount}</Text>
-        </View>
-      )}
+    <View
+      style={[
+        styles.tabItem,
+        focused && { backgroundColor: color + "20" },
+      ]}
+    >
+      <View style={{ position: "relative" }}>
+        <Ionicons name={focused ? iconFocused : icon} size={22} color={color} />
+        {badge != null && badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge > 9 ? "9+" : badge}</Text>
+          </View>
+        )}
+      </View>
+      <Text
+        style={[
+          styles.label,
+          {
+            color,
+            fontFamily: focused ? "Inter_700Bold" : "Inter_500Medium",
+          },
+        ]}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
@@ -38,7 +57,7 @@ function ChatsTabIcon({ color, focused }: { color: string; focused: boolean }) {
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const navBottom = insets.bottom + 12;
+  const { pendingCount } = useOffline();
 
   return (
     <Tabs
@@ -46,56 +65,70 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarShowLabel: false,
         tabBarStyle: {
           position: "absolute",
-          bottom: navBottom,
-          left: 20,
-          right: 20,
-          height: 64,
-          borderRadius: 32,
+          bottom: insets.bottom + 14,
+          left: 48,
+          right: 48,
+          height: 68,
+          borderRadius: 34,
           backgroundColor: colors.tabBar,
           borderTopWidth: 0,
           elevation: 20,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.18,
+          shadowOpacity: 0.2,
           shadowRadius: 24,
           overflow: "hidden",
         },
         tabBarItemStyle: {
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 6,
+          height: 68,
+          paddingVertical: 0,
         },
-        tabBarLabelStyle: { display: "none" },
       }}
     >
       <Tabs.Screen
         name="chats"
         options={{
-          tabBarIcon: ({ color, focused }) => <ChatsTabIcon color={color} focused={focused} />,
-          tabBarLabel: ({ color, focused }) => <TabLabel label="Chats" focused={focused} color={color} />,
-          tabBarLabelStyle: { display: "flex" },
+          tabBarIcon: ({ color, focused }) => (
+            <TabItem
+              icon="chatbubbles-outline"
+              iconFocused="chatbubbles"
+              label="Chats"
+              focused={focused}
+              color={color}
+              badge={pendingCount}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="feed"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? "albums" : "albums-outline"} color={color} />
+            <TabItem
+              icon="albums-outline"
+              iconFocused="albums"
+              label="Feed"
+              focused={focused}
+              color={color}
+            />
           ),
-          tabBarLabel: ({ color, focused }) => <TabLabel label="Feed" focused={focused} color={color} />,
-          tabBarLabelStyle: { display: "flex" },
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? "person-circle" : "person-circle-outline"} color={color} />
+            <TabItem
+              icon="person-circle-outline"
+              iconFocused="person-circle"
+              label="Profile"
+              focused={focused}
+              color={color}
+            />
           ),
-          tabBarLabel: ({ color, focused }) => <TabLabel label="Profile" focused={focused} color={color} />,
-          tabBarLabelStyle: { display: "flex" },
         }}
       />
     </Tabs>
@@ -103,11 +136,22 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: 10, marginTop: 2 },
+  tabItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+    minWidth: 64,
+  },
+  label: {
+    fontSize: 11,
+  },
   badge: {
     position: "absolute",
     top: -3,
-    right: -5,
+    right: -6,
     backgroundColor: "#EF4444",
     borderRadius: 8,
     minWidth: 15,
