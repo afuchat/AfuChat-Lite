@@ -1,31 +1,34 @@
-import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { AfuChatLogo } from "@/components/AfuChatLogo";
 
 type Props = {
   size?: number;
 };
 
 export function VerifiedBadge({ size = 18 }: Props) {
-  const iconSize = Math.round(size * 0.6);
   return (
     <View
       style={[
-        styles.badge,
-        { width: size, height: size, borderRadius: size / 2 },
+        styles.ring,
+        {
+          width: size + 4,
+          height: size + 4,
+          borderRadius: (size + 4) / 2,
+        },
       ]}
     >
-      <Ionicons name="checkmark" size={iconSize} color="#fff" />
+      <AfuChatLogo size={size} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: {
-    backgroundColor: "#1E90FF",
+  ring: {
+    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.9)",
+    borderWidth: 1,
+    borderColor: "rgba(30,144,255,0.2)",
   },
 });
