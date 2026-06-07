@@ -108,7 +108,7 @@ export default function ContactsScreen() {
           if (existing) {
             router.push({
               pathname: "/chat/[id]",
-              params: { id: existing.id, name: getDisplayName(other), isGroup: "0" },
+              params: { id: existing.id, name: getDisplayName(other), isGroup: "0", avatarUrl: other.avatar_url ?? "" },
             });
             return;
           }
@@ -133,7 +133,7 @@ export default function ContactsScreen() {
 
       router.push({
         pathname: "/chat/[id]",
-        params: { id: newChat.id, name: getDisplayName(other), isGroup: "0" },
+        params: { id: newChat.id, name: getDisplayName(other), isGroup: "0", avatarUrl: other.avatar_url ?? "" },
       });
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "Could not open chat. Please try again.");
@@ -233,7 +233,7 @@ export default function ContactsScreen() {
                 disabled={!!starting}
                 activeOpacity={0.7}
               >
-                <Avatar name={name} size={50} isOnline={online} />
+                <Avatar uri={item.avatar_url} name={name} size={50} isOnline={online} />
                 <View style={styles.userInfo}>
                   <View style={styles.nameRow}>
                     <Text

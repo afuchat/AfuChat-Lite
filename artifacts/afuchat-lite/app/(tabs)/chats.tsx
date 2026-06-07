@@ -239,12 +239,13 @@ export default function ChatsScreen() {
                       id: item.chat.id,
                       name: title,
                       isGroup: item.chat.is_group ? "1" : "0",
+                      avatarUrl: item.otherUser?.avatar_url ?? "",
                     },
                   });
                 }}
                 activeOpacity={0.7}
               >
-                <Avatar name={title} size={52} isOnline={online} />
+                <Avatar uri={item.otherUser?.avatar_url} name={title} size={52} isOnline={online} />
                 <View style={styles.chatInfo}>
                   <View style={styles.chatTopRow}>
                     <Text

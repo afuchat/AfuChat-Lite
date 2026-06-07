@@ -11,6 +11,8 @@ import React, {
 
 import { Profile, supabase } from "@/lib/supabase";
 
+type ProfileUpdates = Partial<Pick<Profile, "display_name" | "bio" | "avatar_url" | "handle">>;
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
@@ -24,7 +26,7 @@ type AuthContextType = {
     displayName: string
   ) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Pick<Profile, "display_name" | "bio">>) => Promise<{ error: string | null }>;
+  updateProfile: (updates: ProfileUpdates) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
 };
 
@@ -44,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      // Show cached version immediately
       const cached = await AsyncStorage.getItem(`profile:${userId}`);
       if (cached && mounted.current) setProfile(JSON.parse(cached));
 
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(data as Profile);
         await AsyncStorage.setItem(`profile:${userId}`, JSON.stringify(data));
       }
-    } catch (e) {
+    } catch {
       // Non-fatal — cached value already shown
     }
   }, []);
@@ -134,9 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   };
 
-  const updateProfile = async (
-    updates: Partial<Pick<Profile, "display_name" | "bio">>
-  ) => {
+  const updateProfile = async (updates: ProfileUpdates) => {
     if (!user) return { error: "Not authenticated" };
     try {
       const { error } = await supabase
