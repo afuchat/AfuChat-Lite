@@ -45,7 +45,7 @@ function ChatsNavIcon({ color, focused }: { color: string; focused: boolean }) {
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomOffset = 12;
+  const navBottom = insets.bottom + 12;
 
   return (
     <Tabs
@@ -56,21 +56,22 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
           position: "absolute",
-          bottom: bottomOffset,
-          left: 44,
-          right: 44,
-          height: 54,
-          borderRadius: 27,
+          bottom: navBottom,
+          left: 20,
+          right: 20,
+          height: 58,
+          borderRadius: 30,
           backgroundColor: colors.tabBar,
           borderTopWidth: 0,
-          elevation: 16,
+          elevation: 20,
           shadowColor: "#000",
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.14,
-          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.18,
+          shadowRadius: 24,
+          overflow: "hidden",
         },
         tabBarItemStyle: {
-          height: 54,
+          height: 58,
           paddingVertical: 0,
         },
       }}

@@ -285,7 +285,7 @@ export default function ChatsScreen() {
               </TouchableOpacity>
             );
           }}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}
           showsVerticalScrollIndicator={false}
           onRefresh={() => { setRefreshing(true); loadChats(); }}
           refreshing={refreshing}

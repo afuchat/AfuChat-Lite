@@ -272,7 +272,7 @@ export default function ContactsScreen() {
               </TouchableOpacity>
             );
           }}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}
           showsVerticalScrollIndicator={false}
         />
       )}
