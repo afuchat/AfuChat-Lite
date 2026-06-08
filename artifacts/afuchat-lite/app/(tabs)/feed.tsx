@@ -447,7 +447,7 @@ export default function FeedScreen() {
   useEffect(() => {
     loadPosts();
     const ch = supabase
-      .channel("feed-rt")
+      .channel(`feed-rt-${Date.now()}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, loadPosts)
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "posts" }, loadPosts)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posts" }, loadPosts)

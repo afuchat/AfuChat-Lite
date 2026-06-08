@@ -19,7 +19,6 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useOffline } from "@/context/OfflineContext";
-import { useTheme } from "@/context/ThemeContext";
 import { useColors } from "@/hooks/useColors";
 import { getDisplayName } from "@/lib/supabase";
 
@@ -245,7 +244,6 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile, signOut, user } = useAuth();
   const { isOnline: netOnline, pendingCount } = useOffline();
-  const { themeMode, toggleTheme } = useTheme();
 
   const name = getDisplayName(profile);
 

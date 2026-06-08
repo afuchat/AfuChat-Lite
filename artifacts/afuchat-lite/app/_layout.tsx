@@ -41,10 +41,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inChat = segments[0] === "chat";
     const inProfile = segments[0] === "profile";
     const inNewChat = segments[0] === "new-chat";
+    const inSettings = segments[0] === "settings";
 
     if (!session && !inAuth) {
       router.replace("/(auth)/login");
-    } else if (session && !inTabs && !inChat && !inProfile && !inNewChat) {
+    } else if (session && !inTabs && !inChat && !inProfile && !inNewChat && !inSettings) {
       router.replace("/(tabs)/chats");
     }
   }, [session, authLoading, segments]);
