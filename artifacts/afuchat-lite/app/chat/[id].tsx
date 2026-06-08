@@ -252,6 +252,7 @@ const replyBarStyles = StyleSheet.create({
 
 // ── Main chat screen ──────────────────────────────────────────────────────────
 export default function ChatScreen() {
+  "use no memo";
   const { id, name, isGroup, avatarUrl, otherId, isVerified } = useLocalSearchParams<{
     id: string;
     name: string;
@@ -315,17 +316,11 @@ export default function ChatScreen() {
     }
   }, [id, markAsRead]);
 
-  // Stable ref to loadMessages — updated every render so the subscription effect
-  // never needs loadMessages in its deps (prevents channel teardown/recreate on each render).
-  const loadMessagesRef = useRef(loadMessages);
-  loadMessagesRef.current = loadMessages;
-
+  // "use no memo" at top prevents the React Compiler from spuriously re-running this effect.
   useEffect(() => {
+    loadMessages();
     if (!id || !user) return;
 
-    loadMessagesRef.current();
-
-    const uid = user.id;
     const channel = supabase
       .channel(`chat-${id}`)
       .on(
@@ -347,7 +342,7 @@ export default function ChatScreen() {
         async (payload) => {
           if (!mounted.current) return;
           const row = payload.new as { user_id: string; is_typing: boolean };
-          if (row.user_id === uid) return;
+          if (row.user_id === user.id) return;
           if (row.is_typing) {
             const { data: p } = await supabase
               .from("profiles")
@@ -364,8 +359,7 @@ export default function ChatScreen() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, user?.id]);
+  }, [id, user?.id, loadMessages]);
 
   const onChangeText = (val: string) => {
     setText(val);

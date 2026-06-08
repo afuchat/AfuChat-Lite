@@ -54,6 +54,7 @@ function formatTime(iso: string | null | undefined): string {
 }
 
 export default function ChatsScreen() {
+  "use no memo";
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -196,30 +197,21 @@ export default function ChatsScreen() {
     }
   }, [user]);
 
-  // Stable ref to loadChats — updated every render so the subscription effect never
-  // needs loadChats in its deps, which prevents channel teardown/recreate on every render.
-  const loadChatsRef = useRef(loadChats);
-  loadChatsRef.current = loadChats;
-
-  // Real-time: messages + typing — subscribed once per user session (deps: user.id only)
+  // Real-time: messages + typing
+  // "use no memo" at top of component prevents the React Compiler from spuriously changing
+  // the loadChats reference, so this effect runs only when loadChats truly changes (user login/logout).
   useEffect(() => {
-    if (!user) return;
-
-    // Trigger initial load via the ref so we don't need loadChats in deps
-    loadChatsRef.current();
+    loadChats();
 
     const ch = supabase
       .channel("chats-list-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "chats" },
-        () => loadChatsRef.current())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" },
-        () => loadChatsRef.current())
+      .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, loadChats)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, loadChats)
       .on("postgres_changes", { event: "*", schema: "public", table: "typing_indicators" },
         async (payload) => {
-          if (!mounted.current) return;
-          const uid = user.id;
+          if (!mounted.current || !user) return;
           const row = payload.new as { chat_id: string; user_id: string; is_typing: boolean };
-          if (row.user_id === uid) return;
+          if (row.user_id === user.id) return;
           if (row.is_typing) {
             const { data: p } = await supabase
               .from("profiles")
@@ -251,8 +243,7 @@ export default function ChatsScreen() {
       .subscribe();
 
     return () => { supabase.removeChannel(ch); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [loadChats]);
 
   // Merge typing state into rows reactively
   const displayRows = rows.map((r) => ({
