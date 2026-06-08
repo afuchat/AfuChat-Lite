@@ -196,12 +196,17 @@ export default function ChatsScreen() {
     }
   }, [user]);
 
+  // Unique channel name per subscription prevents Supabase from returning an already-subscribed
+  // channel instance when the effect re-runs, which would throw "cannot add postgres_changes after subscribe".
+  const rtChannelSeq = useRef(0);
+
   // Real-time: messages + typing
   useEffect(() => {
     loadChats();
 
+    const chName = `chats-list-rt-${rtChannelSeq.current++}`;
     const ch = supabase
-      .channel("chats-list-rt")
+      .channel(chName)
       .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, loadChats)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, loadChats)
       .on("postgres_changes", { event: "*", schema: "public", table: "typing_indicators" },
