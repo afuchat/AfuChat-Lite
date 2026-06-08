@@ -175,6 +175,9 @@ importers:
       expo-contacts:
         specifier: ^55.0.14
         version: 55.0.14(expo@55.0.26)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+      expo-video:
+        specifier: ^55.0.17
+        version: 55.0.17(expo@55.0.26)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react-native-url-polyfill:
         specifier: ^3.0.0
         version: 3.0.0(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))
@@ -707,10 +710,6 @@ packages:
 
   '@babel/helper-optimise-call-expression@7.29.7':
     resolution: {integrity: sha512-+kmGVjcT9RGYzoDwdwEqEvGgKe3BYq+O1iGzjFubaNgZHwYHP6lsF2Yghf4kEuv9BV7tYDZ913aBW9am6YKong==}
-    engines: {node: '>=6.9.0'}
-
-  '@babel/helper-plugin-utils@7.28.6':
-    resolution: {integrity: sha512-S9gzZ/bz83GRysI7gAD4wPT/AI3uCnY+9xn+Mx/KPs2JwHJIz1W8PZkg2cqyt3RNOBM8ejcXhV6y8Og7ly/Dug==}
     engines: {node: '>=6.9.0'}
 
   '@babel/helper-plugin-utils@7.29.7':
@@ -4028,6 +4027,13 @@ packages:
       react-native-web:
         optional: true
 
+  expo-video@55.0.17:
+    resolution: {integrity: sha512-z2Fqg1WkctD2jpsUoMQU9y6jWYlV+Lwb7nIMB+3fOcKMVCiUwSWS9xq/MQnRImZe6t9gfRFVMvw2Xz8Lk/kUPw==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+
   expo-web-browser@55.0.16:
     resolution: {integrity: sha512-eeGs3439ewO/Q56Pzg3qbAVZSE0oH/R7XW9VCXI59k0m78ZIYbBtPT4PMFL/+sBgRkXm546Lq/DFcJQPTOfXJg==}
     peerDependencies:
@@ -6766,8 +6772,6 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.7
 
-  '@babel/helper-plugin-utils@7.28.6': {}
-
   '@babel/helper-plugin-utils@7.29.7': {}
 
   '@babel/helper-remap-async-to-generator@7.29.7(@babel/core@7.29.0)':
@@ -7185,12 +7189,12 @@ snapshots:
   '@babel/plugin-transform-react-jsx-self@7.27.1(@babel/core@7.29.0)':
     dependencies:
       '@babel/core': 7.29.0
-      '@babel/helper-plugin-utils': 7.28.6
+      '@babel/helper-plugin-utils': 7.29.7
 
   '@babel/plugin-transform-react-jsx-source@7.27.1(@babel/core@7.29.0)':
     dependencies:
       '@babel/core': 7.29.0
-      '@babel/helper-plugin-utils': 7.28.6
+      '@babel/helper-plugin-utils': 7.29.7
 
   '@babel/plugin-transform-react-jsx@7.29.7(@babel/core@7.29.0)':
     dependencies:
@@ -9424,9 +9428,9 @@ snapshots:
 
   '@replit/vite-plugin-cartographer@0.5.5':
     dependencies:
-      '@babel/parser': 7.29.3
-      '@babel/traverse': 7.29.0
-      '@babel/types': 7.29.0
+      '@babel/parser': 7.29.7
+      '@babel/traverse': 7.29.7
+      '@babel/types': 7.29.7
       magic-string: 0.30.21
       modern-screenshot: 4.7.0
     transitivePeerDependencies:
@@ -9614,8 +9618,8 @@ snapshots:
 
   '@types/babel__core@7.20.5':
     dependencies:
-      '@babel/parser': 7.29.3
-      '@babel/types': 7.29.0
+      '@babel/parser': 7.29.7
+      '@babel/types': 7.29.7
       '@types/babel__generator': 7.27.0
       '@types/babel__template': 7.4.4
       '@types/babel__traverse': 7.28.0
@@ -11019,6 +11023,12 @@ snapshots:
       react-native-web: 0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
     transitivePeerDependencies:
       - supports-color
+
+  expo-video@55.0.17(expo@55.0.26)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
+    dependencies:
+      expo: 55.0.26(@babel/core@7.29.0)(@expo/dom-webview@55.0.6)(@expo/metro-runtime@55.0.11)(expo-router@55.0.16)(react-dom@19.2.0(react@19.2.0))(react-native-worklets@0.7.4(@babel/core@7.29.0)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+      react: 19.2.0
+      react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)
 
   expo-web-browser@55.0.16(expo@55.0.26)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)):
     dependencies:

@@ -18,9 +18,9 @@ const TABS = [
   },
   {
     name: "feed",
-    label: "Feed",
-    icon: "albums-outline" as IoniconsName,
-    iconFocused: "albums" as IoniconsName,
+    label: "Videos",
+    icon: "play-circle-outline" as IoniconsName,
+    iconFocused: "play-circle" as IoniconsName,
   },
   {
     name: "profile",
