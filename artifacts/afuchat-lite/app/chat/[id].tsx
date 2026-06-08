@@ -252,7 +252,6 @@ const replyBarStyles = StyleSheet.create({
 
 // ── Main chat screen ──────────────────────────────────────────────────────────
 export default function ChatScreen() {
-  "use no memo";
   const { id, name, isGroup, avatarUrl, otherId, isVerified } = useLocalSearchParams<{
     id: string;
     name: string;
@@ -322,7 +321,7 @@ export default function ChatScreen() {
     if (!id || !user) return;
 
     const channel = supabase
-      .channel(`chat-${id}`)
+      .channel(`chat-${id}-${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `chat_id=eq.${id}` },

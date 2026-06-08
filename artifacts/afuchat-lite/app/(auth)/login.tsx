@@ -18,15 +18,12 @@ import { AfuChatLogo } from "@/components/AfuChatLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
-type LoginMode = "email" | "username";
-
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { signIn, getEmailByHandle, resetPassword } = useAuth();
+  const { signIn, resetPassword } = useAuth();
   const colors = useColors();
 
-  const [mode, setMode] = useState<LoginMode>("email");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -43,12 +40,6 @@ export default function LoginScreen() {
   const passwordRef = useRef<TextInput>(null);
   const resetEmailRef = useRef<TextInput>(null);
 
-  const switchMode = (next: LoginMode) => {
-    setMode(next);
-    setIdentifier("");
-    setForgotOpen(false);
-  };
-
   const handleLogin = async () => {
     if (!identifier.trim() || !password) {
       Alert.alert("Missing fields", "Please fill in all fields.");
@@ -56,21 +47,7 @@ export default function LoginScreen() {
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-
-    let email = identifier.trim().toLowerCase();
-
-    if (mode === "username") {
-      const handle = email.replace(/^@/, "");
-      const found = await getEmailByHandle(handle);
-      if (!found) {
-        setLoading(false);
-        Alert.alert("User not found", `No account with username @${handle} was found.`);
-        return;
-      }
-      email = found;
-    }
-
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(identifier.trim().toLowerCase(), password);
     setLoading(false);
     if (error) Alert.alert("Sign in failed", error);
   };
@@ -116,49 +93,22 @@ export default function LoginScreen() {
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Sign in to your account</Text>
       </View>
 
-      {/* Mode toggle */}
-      <View style={[styles.toggle, { backgroundColor: colors.muted }]}>
-        {(["email", "username"] as LoginMode[]).map((m) => (
-          <Pressable
-            key={m}
-            style={[
-              styles.toggleOption,
-              mode === m && { backgroundColor: colors.background, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
-            ]}
-            onPress={() => switchMode(m)}
-          >
-            <Feather
-              name={m === "email" ? "mail" : "at-sign"}
-              size={14}
-              color={mode === m ? colors.primary : colors.mutedForeground}
-            />
-            <Text style={[
-              styles.toggleLabel,
-              { color: mode === m ? colors.primary : colors.mutedForeground },
-              mode === m && { fontFamily: "Inter_600SemiBold" },
-            ]}>
-              {m === "email" ? "Email" : "Username"}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
       {/* Form */}
       <View style={styles.form}>
-        {/* Identifier field */}
+        {/* Email field */}
         <View style={[styles.inputRow, { backgroundColor: colors.muted, borderColor: idFocused ? colors.primary : colors.border }]}>
           <Feather
-            name={mode === "email" ? "mail" : "at-sign"}
+            name="mail"
             size={18}
             color={idFocused ? colors.primary : colors.mutedForeground}
           />
           <TextInput
             style={[styles.input, { color: colors.foreground }]}
-            placeholder={mode === "email" ? "Email address" : "Username"}
+            placeholder="Email address"
             placeholderTextColor={colors.mutedForeground}
             value={identifier}
             onChangeText={setIdentifier}
-            keyboardType={mode === "email" ? "email-address" : "default"}
+            keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="next"
@@ -285,23 +235,6 @@ const styles = StyleSheet.create({
   headingWrap: { gap: 4 },
   title: { fontSize: 24, fontFamily: "Inter_700Bold", letterSpacing: -0.4 },
   subtitle: { fontSize: 14, fontFamily: "Inter_400Regular" },
-
-  toggle: {
-    flexDirection: "row",
-    borderRadius: 10,
-    padding: 3,
-    gap: 2,
-  },
-  toggleOption: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  toggleLabel: { fontSize: 13, fontFamily: "Inter_500Medium" },
 
   form: { gap: 12 },
   inputRow: {

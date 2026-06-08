@@ -54,7 +54,6 @@ function formatTime(iso: string | null | undefined): string {
 }
 
 export default function ChatsScreen() {
-  "use no memo";
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -204,7 +203,7 @@ export default function ChatsScreen() {
     loadChats();
 
     const ch = supabase
-      .channel("chats-list-rt")
+      .channel(`chats-list-rt-${Date.now()}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, loadChats)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, loadChats)
       .on("postgres_changes", { event: "*", schema: "public", table: "typing_indicators" },

@@ -16,16 +16,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 export type Profile = {
   id: string;
-  email?: string | null;
   display_name: string | null;
   handle: string;
   bio: string | null;
   avatar_url: string | null;
   last_seen: string | null;
-  is_verified: boolean;
+  is_verified: boolean | null;
   is_online?: boolean;
-  acoin: number;
-  created_at: string;
+  acoin: number | null;
+  created_at: string | null;
   latitude?: number | null;
   longitude?: number | null;
 };

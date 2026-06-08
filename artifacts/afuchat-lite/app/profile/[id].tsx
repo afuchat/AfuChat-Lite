@@ -165,7 +165,7 @@ export default function UserProfileScreen() {
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.foreground }]}>
-                {new Date(profile.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                {profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"}
               </Text>
               <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Joined</Text>
             </View>

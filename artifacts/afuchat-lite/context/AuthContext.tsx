@@ -29,7 +29,6 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   updateProfile: (updates: ProfileUpdates) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
-  getEmailByHandle: (handle: string) => Promise<string | null>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
 };
 
@@ -59,6 +58,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select("id, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
         .eq("id", userId)
         .single();
+
+      // PGRST116 = row not found — create a default profile row so the app isn't stuck
+      if (error?.code === "PGRST116") {
+        const handle = `user_${userId.replace(/-/g, "").slice(0, 12)}`;
+        await supabase.from("profiles").insert({
+          id: userId,
+          handle,
+          display_name: handle,
+          xp: 0,
+          acoin: 0,
+          is_business_mode: false,
+          location_sharing_enabled: false,
+        });
+        const { data: created } = await supabase
+          .from("profiles")
+          .select("id, display_name, handle, bio, avatar_url, last_seen, is_verified, acoin, created_at")
+          .eq("id", userId)
+          .single();
+        if (created && mounted.current) {
+          setProfile(created as Profile);
+          await AsyncStorage.setItem(`profile:${userId}`, JSON.stringify(created));
+        }
+        return;
+      }
 
       if (error) throw error;
       if (data && mounted.current) {
@@ -159,9 +182,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { error: profileError } = await supabase.from("profiles").insert({
         id: data.user.id,
-        email: email.trim().toLowerCase(),
         handle: handle.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_"),
         display_name: displayName.trim(),
+        xp: 0,
+        acoin: 0,
+        is_business_mode: false,
+        location_sharing_enabled: false,
       });
 
       return { error: profileError?.message ?? null };
@@ -194,21 +220,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getEmailByHandle = async (handle: string): Promise<string | null> => {
-    try {
-      const clean = handle.replace(/^@/, "").trim().toLowerCase();
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("handle", clean)
-        .maybeSingle();
-      if (error || !data?.email) return null;
-      return data.email as string;
-    } catch {
-      return null;
-    }
-  };
-
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(
@@ -226,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         session, user, profile, loading,
         signIn, signUp, signOut, updateProfile, refreshProfile,
-        getEmailByHandle, resetPassword,
+        resetPassword,
       }}
     >
       {children}
