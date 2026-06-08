@@ -5,6 +5,6 @@ type Props = {
   size?: number;
 };
 
-export function VerifiedBadge({ size = 18 }: Props) {
+export function VerifiedBadge({ size = 22 }: Props) {
   return <AfuChatLogo size={size} />;
 }

@@ -59,6 +59,7 @@
     "@react-native-community/netinfo": "^11.5.2",
     "@supabase/supabase-js": "^2.107.0",
     "expo-contacts": "^55.0.14",
+    "expo-file-system": "~55.0.22",
     "expo-video": "^55.0.17",
     "react-native-url-polyfill": "^3.0.0"
   }
